@@ -1,0 +1,24 @@
+name: pharmacy_pos
+description: Pharmacy point-of-sale client for desktop and web.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^8.1.6
+  bloc_concurrency: ^0.2.5
+  stream_transform: ^2.1.0
+  equatable: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  bloc_test: ^9.1.7
+
+flutter:
+  uses-material-design: true

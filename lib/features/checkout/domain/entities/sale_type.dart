@@ -1,0 +1,1 @@
+enum SaleType { cash, credit }

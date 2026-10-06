@@ -7,6 +7,7 @@ import '../../../checkout/presentation/pages/pos_page.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 import '../../../medicines/presentation/pages/medicines_page.dart';
 import '../../../purchases/presentation/pages/purchases_page.dart';
+import '../../../stock/presentation/pages/stock_page.dart';
 import '../widgets/app_sidebar.dart';
 
 class AppShell extends StatefulWidget {
@@ -50,6 +51,8 @@ class _AppShellState extends State<AppShell> {
         return const PurchasesPage();
       case AppModule.medicines:
         return const MedicinesPage();
+      case AppModule.stock:
+        return const StockPage();
       default:
         return EmptyState(
           icon: _selected.icon,

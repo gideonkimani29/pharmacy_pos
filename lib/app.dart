@@ -33,6 +33,11 @@ import 'features/purchases/domain/repositories/supplier_repository.dart';
 import 'features/purchases/domain/usecases/get_purchases.dart';
 import 'features/purchases/presentation/bloc/purchases_cubit.dart';
 import 'features/shell/presentation/pages/app_shell.dart';
+import 'features/stock/data/repositories/demo_stock_repository.dart';
+import 'features/stock/domain/repositories/stock_repository.dart';
+import 'features/stock/domain/usecases/adjust_stock.dart';
+import 'features/stock/domain/usecases/get_stock_batches.dart';
+import 'features/stock/presentation/bloc/stock_cubit.dart';
 
 /// Composition root. Swap the Demo* repositories for the REST-backed ones here
 /// and nothing above the data layer changes.
@@ -50,6 +55,7 @@ class PharmacyPosApp extends StatelessWidget {
         RepositoryProvider<SupplierRepository>(create: (_) => DemoSupplierRepository()),
         RepositoryProvider<PurchaseRepository>(create: (_) => DemoPurchaseRepository()),
         RepositoryProvider<MedicineRepository>(create: (_) => DemoMedicineRepository()),
+        RepositoryProvider<StockRepository>(create: (_) => DemoStockRepository()),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -82,6 +88,15 @@ class PharmacyPosApp extends StatelessWidget {
                 getMedicines: GetMedicines(repository),
                 saveMedicine: SaveMedicine(repository),
                 setMedicineActive: SetMedicineActive(repository),
+              );
+            },
+          ),
+          BlocProvider<StockCubit>(
+            create: (context) {
+              final repository = context.read<StockRepository>();
+              return StockCubit(
+                getStockBatches: GetStockBatches(repository),
+                adjustStock: AdjustStock(repository),
               );
             },
           ),

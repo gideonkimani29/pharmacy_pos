@@ -16,6 +16,13 @@ import 'features/checkout/domain/usecases/submit_sale.dart';
 import 'features/checkout/presentation/bloc/cart_bloc.dart';
 import 'features/checkout/presentation/bloc/customers_cubit.dart';
 import 'features/checkout/presentation/bloc/product_search_bloc.dart';
+import 'features/customers/data/repositories/demo_customer_account_repository.dart';
+import 'features/customers/domain/repositories/customer_account_repository.dart';
+import 'features/customers/domain/usecases/get_customer_accounts.dart';
+import 'features/customers/domain/usecases/receive_account_payment.dart';
+import 'features/customers/domain/usecases/save_customer_account.dart';
+import 'features/customers/domain/usecases/set_customer_active.dart';
+import 'features/customers/presentation/bloc/customer_accounts_cubit.dart';
 import 'features/dashboard/data/repositories/demo_dashboard_repository.dart';
 import 'features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'features/dashboard/domain/usecases/get_dashboard_summary.dart';
@@ -56,6 +63,7 @@ class PharmacyPosApp extends StatelessWidget {
         RepositoryProvider<PurchaseRepository>(create: (_) => DemoPurchaseRepository()),
         RepositoryProvider<MedicineRepository>(create: (_) => DemoMedicineRepository()),
         RepositoryProvider<StockRepository>(create: (_) => DemoStockRepository()),
+        RepositoryProvider<CustomerAccountRepository>(create: (_) => DemoCustomerAccountRepository()),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -97,6 +105,17 @@ class PharmacyPosApp extends StatelessWidget {
               return StockCubit(
                 getStockBatches: GetStockBatches(repository),
                 adjustStock: AdjustStock(repository),
+              );
+            },
+          ),
+          BlocProvider<CustomerAccountsCubit>(
+            create: (context) {
+              final repository = context.read<CustomerAccountRepository>();
+              return CustomerAccountsCubit(
+                getCustomerAccounts: GetCustomerAccounts(repository),
+                saveCustomerAccount: SaveCustomerAccount(repository),
+                setCustomerActive: SetCustomerActive(repository),
+                receiveAccountPayment: ReceiveAccountPayment(repository),
               );
             },
           ),

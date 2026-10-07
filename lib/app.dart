@@ -39,6 +39,12 @@ import 'features/purchases/domain/repositories/purchase_repository.dart';
 import 'features/purchases/domain/repositories/supplier_repository.dart';
 import 'features/purchases/domain/usecases/get_purchases.dart';
 import 'features/purchases/presentation/bloc/purchases_cubit.dart';
+import 'features/reports/data/repositories/demo_report_repository.dart';
+import 'features/reports/domain/repositories/report_repository.dart';
+import 'features/reports/domain/usecases/get_losses_report.dart';
+import 'features/reports/domain/usecases/get_profit_report.dart';
+import 'features/reports/domain/usecases/get_sales_report.dart';
+import 'features/reports/presentation/bloc/reports_cubit.dart';
 import 'features/shell/presentation/pages/app_shell.dart';
 import 'features/stock/data/repositories/demo_stock_repository.dart';
 import 'features/stock/domain/repositories/stock_repository.dart';
@@ -63,6 +69,7 @@ class PharmacyPosApp extends StatelessWidget {
         RepositoryProvider<PurchaseRepository>(create: (_) => DemoPurchaseRepository()),
         RepositoryProvider<MedicineRepository>(create: (_) => DemoMedicineRepository()),
         RepositoryProvider<StockRepository>(create: (_) => DemoStockRepository()),
+        RepositoryProvider<ReportRepository>(create: (_) => DemoReportRepository()),
         RepositoryProvider<CustomerAccountRepository>(create: (_) => DemoCustomerAccountRepository()),
       ],
       child: MultiBlocProvider(
@@ -116,6 +123,16 @@ class PharmacyPosApp extends StatelessWidget {
                 saveCustomerAccount: SaveCustomerAccount(repository),
                 setCustomerActive: SetCustomerActive(repository),
                 receiveAccountPayment: ReceiveAccountPayment(repository),
+              );
+            },
+          ),
+          BlocProvider<ReportsCubit>(
+            create: (context) {
+              final repository = context.read<ReportRepository>();
+              return ReportsCubit(
+                getSalesReport: GetSalesReport(repository),
+                getProfitReport: GetProfitReport(repository),
+                getLossesReport: GetLossesReport(repository),
               );
             },
           ),

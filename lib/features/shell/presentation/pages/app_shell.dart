@@ -8,6 +8,7 @@ import '../../../customers/presentation/pages/customers_page.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
 import '../../../medicines/presentation/pages/medicines_page.dart';
 import '../../../purchases/presentation/pages/purchases_page.dart';
+import '../../../reports/presentation/pages/reports_page.dart';
 import '../../../stock/presentation/pages/stock_page.dart';
 import '../widgets/app_sidebar.dart';
 
@@ -56,6 +57,8 @@ class _AppShellState extends State<AppShell> {
         return const StockPage();
       case AppModule.customers:
         return const CustomersPage();
+      case AppModule.reports:
+        return const ReportsPage();
       default:
         return EmptyState(
           icon: _selected.icon,

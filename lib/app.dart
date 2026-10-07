@@ -45,6 +45,16 @@ import 'features/reports/domain/usecases/get_losses_report.dart';
 import 'features/reports/domain/usecases/get_profit_report.dart';
 import 'features/reports/domain/usecases/get_sales_report.dart';
 import 'features/reports/presentation/bloc/reports_cubit.dart';
+import 'features/settings/data/repositories/demo_settings_repository.dart';
+import 'features/settings/data/repositories/demo_user_repository.dart';
+import 'features/settings/domain/repositories/settings_repository.dart';
+import 'features/settings/domain/repositories/user_repository.dart';
+import 'features/settings/domain/usecases/get_settings.dart';
+import 'features/settings/domain/usecases/get_users.dart';
+import 'features/settings/domain/usecases/save_settings.dart';
+import 'features/settings/domain/usecases/save_user.dart';
+import 'features/settings/domain/usecases/set_user_active.dart';
+import 'features/settings/presentation/bloc/settings_cubit.dart';
 import 'features/shell/presentation/pages/app_shell.dart';
 import 'features/stock/data/repositories/demo_stock_repository.dart';
 import 'features/stock/domain/repositories/stock_repository.dart';
@@ -70,6 +80,8 @@ class PharmacyPosApp extends StatelessWidget {
         RepositoryProvider<MedicineRepository>(create: (_) => DemoMedicineRepository()),
         RepositoryProvider<StockRepository>(create: (_) => DemoStockRepository()),
         RepositoryProvider<ReportRepository>(create: (_) => DemoReportRepository()),
+        RepositoryProvider<SettingsRepository>(create: (_) => DemoSettingsRepository()),
+        RepositoryProvider<UserRepository>(create: (_) => DemoUserRepository()),
         RepositoryProvider<CustomerAccountRepository>(create: (_) => DemoCustomerAccountRepository()),
       ],
       child: MultiBlocProvider(
@@ -133,6 +145,19 @@ class PharmacyPosApp extends StatelessWidget {
                 getSalesReport: GetSalesReport(repository),
                 getProfitReport: GetProfitReport(repository),
                 getLossesReport: GetLossesReport(repository),
+              );
+            },
+          ),
+          BlocProvider<SettingsCubit>(
+            create: (context) {
+              final settings = context.read<SettingsRepository>();
+              final users = context.read<UserRepository>();
+              return SettingsCubit(
+                getSettings: GetSettings(settings),
+                saveSettings: SaveSettings(settings),
+                getUsers: GetUsers(users),
+                saveUser: SaveUser(users),
+                setUserActive: SetUserActive(users),
               );
             },
           ),

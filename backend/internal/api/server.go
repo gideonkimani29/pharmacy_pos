@@ -45,6 +45,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/v1/auth/login", s.login)
 	s.mux.HandleFunc("POST /api/v1/auth/refresh", s.refresh)
 	s.mux.HandleFunc("POST /api/v1/auth/logout", s.logout)
+	s.mux.HandleFunc("POST /api/v1/auth/accept-invitation", s.acceptInvitation)
 
 	s.handle("GET /api/v1/products", s.products)
 	s.handle("GET /api/v1/products/barcode/{barcode}", s.productByBarcode)
@@ -63,6 +64,7 @@ func (s *Server) routes() {
 	s.handle("PATCH /api/v1/customer-accounts/{id}/active", s.setCustomerAccountActive)
 	s.handle("POST /api/v1/customer-account-payments", s.receiveAccountPayment)
 	s.handle("GET /api/v1/suppliers", s.listSuppliers)
+	s.handle("POST /api/v1/suppliers", s.createSupplier)
 	s.handle("GET /api/v1/purchases", s.listPurchases)
 	s.handle("POST /api/v1/purchases", s.recordPurchase)
 	s.handle("GET /api/v1/reports/sales", s.salesReport)

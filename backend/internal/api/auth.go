@@ -192,6 +192,57 @@ func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) acceptInvitation(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	if request.Token == "" || len(request.Password) < 12 {
+		writeError(w, http.StatusBadRequest, "validation_error", "A valid invitation and password of at least 12 characters are required.", nil)
+		return
+	}
+	tx, err := s.db.BeginTx(r.Context(), nil)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not accept invitation.", nil)
+		return
+	}
+	defer tx.Rollback()
+	var userID, expires string
+	if err := tx.QueryRowContext(r.Context(), `SELECT user_id, expires_at FROM user_invitations WHERE token_hash = ?`,
+		hashToken(request.Token)).Scan(&userID, &expires); err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid_invitation", "Invitation is invalid or expired.", nil)
+		return
+	}
+	expiry, err := time.Parse(time.RFC3339Nano, expires)
+	if err != nil || !expiry.After(time.Now()) {
+		_, _ = tx.ExecContext(r.Context(), `DELETE FROM user_invitations WHERE token_hash = ?`, hashToken(request.Token))
+		writeError(w, http.StatusUnauthorized, "invalid_invitation", "Invitation is invalid or expired.", nil)
+		return
+	}
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not set password.", nil)
+		return
+	}
+	if _, err := tx.ExecContext(r.Context(), `UPDATE users SET password_hash = ? WHERE id = ? AND active = 1`,
+		string(passwordHash), userID); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not set password.", nil)
+		return
+	}
+	if _, err := tx.ExecContext(r.Context(), `DELETE FROM user_invitations WHERE token_hash = ?`, hashToken(request.Token)); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not accept invitation.", nil)
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not accept invitation.", nil)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func isNotFound(err error) bool {
 	return errors.Is(err, sql.ErrNoRows)
 }

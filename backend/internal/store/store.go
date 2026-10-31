@@ -27,6 +27,11 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   user_id TEXT NOT NULL REFERENCES users(id),
   expires_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS user_invitations (
+  token_hash TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id),
+  expires_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS medicines (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,

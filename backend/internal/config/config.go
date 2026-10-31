@@ -7,11 +7,11 @@ import (
 )
 
 type Config struct {
-	Address      string
-	DatabasePath string
-	JWTSecret    []byte
+	Address        string
+	DatabasePath   string
+	JWTSecret      []byte
 	BootstrapToken string
-	CORSOrigins  map[string]struct{}
+	CORSOrigins    map[string]struct{}
 }
 
 func Load() (Config, error) {
@@ -41,10 +41,10 @@ func Load() (Config, error) {
 	}
 
 	return Config{
-		Address:      address,
-		DatabasePath: databasePath,
-		JWTSecret:    []byte(secret),
+		Address:        address,
+		DatabasePath:   databasePath,
+		JWTSecret:      []byte(secret),
 		BootstrapToken: bootstrapToken,
-		CORSOrigins:  origins,
+		CORSOrigins:    origins,
 	}, nil
 }

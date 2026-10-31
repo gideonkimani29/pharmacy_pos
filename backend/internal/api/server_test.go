@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
-	"strings"
 
 	_ "modernc.org/sqlite"
 
@@ -28,9 +28,9 @@ func testServer(t *testing.T) (*sql.DB, *httptest.Server) {
 		t.Fatal(err)
 	}
 	handler := New(db, config.Config{
-		JWTSecret:     []byte("test-secret-with-more-than-thirty-two-characters"),
+		JWTSecret:      []byte("test-secret-with-more-than-thirty-two-characters"),
 		BootstrapToken: "test-bootstrap-token-with-more-than-thirty-two",
-		CORSOrigins:   map[string]struct{}{"http://localhost:3000": {}},
+		CORSOrigins:    map[string]struct{}{"http://localhost:3000": {}},
 	})
 	server := httptest.NewServer(handler)
 	t.Cleanup(func() {
@@ -285,9 +285,9 @@ func TestSaleIdempotencyAndAtomicStock(t *testing.T) {
 	}
 	var reportData struct {
 		Days []struct {
-			Transactions int64 `json:"transactions"`
-			ItemsSold    int64 `json:"itemsSold"`
-			GrossMinor   int64 `json:"grossMinor"`
+			Transactions  int64 `json:"transactions"`
+			ItemsSold     int64 `json:"itemsSold"`
+			GrossMinor    int64 `json:"grossMinor"`
 			DiscountMinor int64 `json:"discountMinor"`
 		} `json:"days"`
 		ByPayment []struct {

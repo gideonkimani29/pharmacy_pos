@@ -227,13 +227,6 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		if input.CustomerID != nil {
-			if _, err := tx.ExecContext(r.Context(), `UPDATE customers SET last_purchase_on = ? WHERE id = ?`,
-				now.Format("2006-01-02"), *input.CustomerID); err != nil {
-				writeError(w, http.StatusInternalServerError, "internal_error", "Could not update customer purchase date.", nil)
-				return
-			}
-		}
 	}
 
 	now := time.Now().UTC()
@@ -340,6 +333,13 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 		updated, _ := result.RowsAffected()
 		if updated == 0 {
 			writeError(w, http.StatusConflict, "credit_limit", "Customer account is inactive or credit limit would be exceeded.", nil)
+			return
+		}
+	}
+	if input.CustomerID != nil && onAccount == 0 {
+		if _, err := tx.ExecContext(r.Context(), `UPDATE customers SET last_purchase_on = ? WHERE id = ?`,
+			now.Format("2006-01-02"), *input.CustomerID); err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "Could not update customer purchase date.", nil)
 			return
 		}
 	}

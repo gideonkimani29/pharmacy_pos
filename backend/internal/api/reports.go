@@ -26,9 +26,11 @@ func (s *Server) salesReport(w http.ResponseWriter, r *http.Request) {
 	for date := from; !date.After(to); date = date.AddDate(0, 0, 1) {
 		var transactions, items int64
 		var gross, discount int64
-		err := s.db.QueryRowContext(r.Context(), `SELECT COUNT(DISTINCT s.id), COALESCE(SUM(sl.quantity), 0),
-			COALESCE(SUM(sl.quantity * sl.unit_price_minor), 0), COALESCE(SUM(s.discount_minor), 0)
-			FROM sales s LEFT JOIN sale_lines sl ON sl.sale_id = s.id WHERE date(s.completed_at) = ?`,
+		err := s.db.QueryRowContext(r.Context(), `SELECT COUNT(*), COALESCE(SUM(s.item_count), 0),
+			COALESCE(SUM(s.subtotal_minor), 0), COALESCE(SUM(s.discount_minor), 0)
+			FROM (SELECT s.id, s.subtotal_minor, s.discount_minor, date(s.completed_at) AS sale_date,
+				(SELECT COALESCE(SUM(quantity), 0) FROM sale_lines sl WHERE sl.sale_id = s.id) AS item_count
+				FROM sales s) s WHERE s.sale_date = ?`,
 			date.Format("2006-01-02")).Scan(&transactions, &items, &gross, &discount)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "internal_error", "Could not load sales report.", nil)

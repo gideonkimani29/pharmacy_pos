@@ -135,6 +135,10 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "prescription_required", "Prescription verification is required.", nil)
 			return
 		}
+		if requiresRX != 0 && currentActor(r).Role == "cashier" {
+			writeError(w, http.StatusForbidden, "pharmacist_required", "A pharmacist must authorize prescription medicines.", nil)
+			return
+		}
 		if line.Quantity > 1_000_000 || currentPrice > 1_000_000_000_000/line.Quantity {
 			writeError(w, http.StatusBadRequest, "validation_error", "Sale quantities or amounts are too large.", nil)
 			return
@@ -483,6 +487,8 @@ func (s *Server) recordPurchase(w http.ResponseWriter, r *http.Request) {
 		expiry := ""
 		if line.ExpiryDate != nil {
 			expiry, _ = parseDate(*line.ExpiryDate).Format("2006-01-02"), err
+		} else {
+			expiry = "9999-12-31"
 		}
 		_, err = tx.ExecContext(r.Context(), `INSERT INTO batches
 			(id, medicine_id, batch_number, supplier_name, received_on, expiry_date, quantity_received, quantity_on_hand,

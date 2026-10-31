@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"fmt"
 	"net/http"
 	"strings"
@@ -237,7 +238,7 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 		return false
 	}
 	var trailing any
-	if err := decoder.Decode(&trailing); err == nil {
+	if err := decoder.Decode(&trailing); !errors.Is(err, io.EOF) {
 		writeError(w, http.StatusBadRequest, "invalid_json", "Request body must contain one JSON value.", nil)
 		return false
 	}

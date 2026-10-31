@@ -18,14 +18,16 @@ void main() {
     int onHand = 50,
     int receivedDaysAgo = 30,
     int reorder = 10,
+    String? batchNumber,
+    String supplierName = 'Supplier',
   }) {
     final midnight = DateTime(today.year, today.month, today.day);
     return StockBatch(
       id: id,
       medicineId: medicineId,
       medicineName: 'Medicine $medicineId',
-      batchNumber: 'BN-$id',
-      supplierName: 'Supplier',
+      batchNumber: batchNumber ?? 'BN-$id',
+      supplierName: supplierName,
       receivedOn: midnight.subtract(Duration(days: receivedDaysAgo)),
       expiryDate: midnight.add(Duration(days: expiresInDays)),
       quantityReceived: received,
@@ -38,7 +40,7 @@ void main() {
 
   List<StockBatch> testBatches() => [
         batch(id: 'b1', medicineId: 'm1', expiresInDays: 420, onHand: 60),
-        batch(id: 'b2', medicineId: 'm1', expiresInDays: 600, onHand: 80),
+        batch(id: 'b2', medicineId: 'm1', expiresInDays: 600, onHand: 80, batchNumber: 'PN2503', supplierName: 'Nairobi Generics Depot'),
         batch(id: 'b5', medicineId: 'm3', expiresInDays: 210, onHand: 8, reorder: 25),
         batch(id: 'b6', medicineId: 'm4', expiresInDays: 48, onHand: 25),
         batch(id: 'b9', medicineId: 'm6', expiresInDays: 18, onHand: 71),

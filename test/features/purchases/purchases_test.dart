@@ -13,6 +13,7 @@ import 'package:pharmacy_pos/features/purchases/presentation/bloc/purchase_form_
 
 void main() {
   final received = DateTime(2026, 10, 4);
+  const testSupplier = Supplier(id: 's1', name: 'Test Supplier');
 
   PurchaseLine line({
     String product = 'p1',
@@ -106,9 +107,9 @@ void main() {
     );
 
     PurchaseFormCubit build() => PurchaseFormCubit(
-          getSuppliers: GetSuppliers(DemoSupplierRepository()),
-          searchProducts: SearchProducts(DemoProductRepository()),
-          recordPurchase: RecordPurchase(DemoPurchaseRepository()),
+          getSuppliers: GetSuppliers(DemoSupplierRepository(suppliers: const [testSupplier])),
+          searchProducts: SearchProducts(DemoProductRepository(products: const [product])),
+          recordPurchase: RecordPurchase(DemoPurchaseRepository(suppliers: const [testSupplier])),
           clock: () => received,
         );
 
@@ -151,7 +152,7 @@ void main() {
       final cubit = build();
       await cubit.load();
       cubit
-        ..setSupplier(DemoSupplierRepository.suppliers.first)
+        ..setSupplier(testSupplier)
         ..setInvoiceNumber('INV-9')
         ..addProduct(product);
       final id = cubit.state.lines.single.id;

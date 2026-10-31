@@ -44,6 +44,8 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) setState(() => _error = 'The Go API did not respond in time. Try again.');
     } on FormatException catch (error) {
       if (mounted) setState(() => _error = error.message);
+    } on Exception catch (error) {
+      if (mounted) setState(() => _error = 'Could not sign in: $error');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

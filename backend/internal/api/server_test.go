@@ -199,6 +199,19 @@ func TestUserInvitationCanBeAcceptedOnlyOnce(t *testing.T) {
 	if login.StatusCode != http.StatusOK {
 		t.Fatalf("invited user login status = %d, want 200", login.StatusCode)
 	}
+	cashierTokens := decodeResponse[tokenResponse](t, login)
+	for _, path := range []string{
+		"/api/v1/stock/batches",
+		"/api/v1/purchases",
+		"/api/v1/reports/profit?from=2026-01-01&to=2026-01-01",
+		"/api/v1/reports/losses?from=2026-01-01&to=2026-01-01",
+		"/api/v1/users",
+	} {
+		response := request(t, client, http.MethodGet, server.URL+path, cashierTokens.AccessToken, nil)
+		if response.StatusCode != http.StatusForbidden {
+			t.Errorf("%s status = %d, want 403", path, response.StatusCode)
+		}
+	}
 }
 
 func TestSaleIdempotencyAndAtomicStock(t *testing.T) {

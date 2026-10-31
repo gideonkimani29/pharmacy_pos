@@ -127,6 +127,12 @@ class ApiSession extends ChangeNotifier {
         code: 'invalid_response',
         message: error.message,
       );
+    } on Exception catch (error) {
+      _restoreError = ApiException(
+        statusCode: 0,
+        code: 'session_restore_failed',
+        message: 'Could not restore the saved sign-in: $error',
+      );
     }
     _initialized = true;
     _notify();

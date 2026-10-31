@@ -360,6 +360,111 @@ func TestSettingsAreSeededAndTaxRateIsBounded(t *testing.T) {
 	}
 }
 
+func TestPurchaseStockAndCustomerPaymentEndpoints(t *testing.T) {
+	db, server := testServer(t)
+	client := server.Client()
+	bootstrap := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/bootstrap", "", map[string]any{
+		"name": "Admin", "email": "admin@example.test", "password": "a-very-secure-password",
+	})
+	tokens := decodeResponse[tokenResponse](t, bootstrap)
+
+	medicineResponse := request(t, client, http.MethodPost, server.URL+"/api/v1/medicines", tokens.AccessToken, map[string]any{
+		"name": "Test Medicine", "genericName": "Test", "dosageForm": "tablet", "sku": "MED-001",
+		"barcode": "111222", "sellingPriceMinor": 1000, "reorderLevel": 3, "requiresPrescription": false,
+	})
+	if medicineResponse.StatusCode != http.StatusCreated {
+		t.Fatalf("create medicine status = %d, want 201", medicineResponse.StatusCode)
+	}
+	medicine := decodeResponse[medicineDTO](t, medicineResponse)
+
+	supplierResponse := request(t, client, http.MethodPost, server.URL+"/api/v1/suppliers", tokens.AccessToken, map[string]any{
+		"name": "Test Supplier", "phone": "+254700000000",
+	})
+	if supplierResponse.StatusCode != http.StatusCreated {
+		t.Fatalf("create supplier status = %d, want 201", supplierResponse.StatusCode)
+	}
+	var supplier struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(supplierResponse.Body).Decode(&supplier); err != nil {
+		t.Fatal(err)
+	}
+
+	received := time.Now().UTC().Format("2006-01-02")
+	expiry := time.Now().UTC().AddDate(1, 0, 0).Format("2006-01-02")
+	purchaseBody := map[string]any{
+		"supplierId": supplier.ID, "invoiceNumber": "INV-001", "receivedOn": received, "paymentStatus": "paid",
+		"lines": []map[string]any{{
+			"productId": medicine.ID, "productName": medicine.Name, "batchNumber": "LOT-1",
+			"expiryDate": expiry, "quantity": 5, "unitCostMinor": 500, "sellingPriceMinor": 1000,
+		}},
+	}
+	purchaseRequest := func() *http.Response {
+		req, err := http.NewRequest(http.MethodPost, server.URL+"/api/v1/purchases", bytes.NewReader(mustJSON(t, purchaseBody)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+		req.Header.Set("Idempotency-Key", "purchase-key-1")
+		req.Header.Set("Content-Type", "application/json")
+		response, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = response.Body.Close() })
+		return response
+	}
+	purchase := purchaseRequest()
+	if purchase.StatusCode != http.StatusCreated {
+		t.Fatalf("record purchase status = %d", purchase.StatusCode)
+	}
+	purchaseResult := decodeResponse[purchaseDTO](t, purchase)
+	if purchaseResult.TotalMinor != 2500 || purchaseResult.UnitCount != 5 {
+		t.Fatalf("unexpected purchase result: %+v", purchaseResult)
+	}
+	retry := purchaseRequest()
+	if retry.StatusCode != http.StatusOK {
+		t.Fatalf("idempotent purchase retry status = %d, want 200", retry.StatusCode)
+	}
+
+	batchesResponse := request(t, client, http.MethodGet, server.URL+"/api/v1/stock/batches", tokens.AccessToken, nil)
+	if batchesResponse.StatusCode != http.StatusOK {
+		t.Fatalf("list batches status = %d", batchesResponse.StatusCode)
+	}
+	batches := decodeResponse[[]batchDTO](t, batchesResponse)
+	if len(batches) != 1 || batches[0].QuantityOnHand != 5 {
+		t.Fatalf("unexpected stock batches: %+v", batches)
+	}
+	adjusted := request(t, client, http.MethodPost, server.URL+"/api/v1/stock/adjustments", tokens.AccessToken, map[string]any{
+		"batchId": batches[0].ID, "previousQuantity": 5, "newQuantity": 4,
+		"reason": "countCorrection", "note": "",
+	})
+	if adjusted.StatusCode != http.StatusCreated {
+		t.Fatalf("adjust stock status = %d", adjusted.StatusCode)
+	}
+
+	customerResponse := request(t, client, http.MethodPost, server.URL+"/api/v1/customer-accounts", tokens.AccessToken, map[string]any{
+		"name": "Test Customer", "phone": "+254700000001", "email": "customer@example.test", "creditLimitMinor": 1000,
+	})
+	if customerResponse.StatusCode != http.StatusCreated {
+		t.Fatalf("create customer status = %d", customerResponse.StatusCode)
+	}
+	customer := decodeResponse[customerAccountDTO](t, customerResponse)
+	if _, err := db.Exec(`UPDATE customers SET balance_minor = 300 WHERE id = ?`, customer.ID); err != nil {
+		t.Fatal(err)
+	}
+	payment := request(t, client, http.MethodPost, server.URL+"/api/v1/customer-account-payments", tokens.AccessToken, map[string]any{
+		"customerId": customer.ID, "amountMinor": 100, "method": "mobile", "reference": "MPESA-1",
+	})
+	if payment.StatusCode != http.StatusCreated {
+		t.Fatalf("receive account payment status = %d", payment.StatusCode)
+	}
+	updatedCustomer := decodeResponse[customerAccountDTO](t, payment)
+	if updatedCustomer.Balance != 200 {
+		t.Fatalf("customer balance = %d, want 200", updatedCustomer.Balance)
+	}
+}
+
 func mustJSON(t *testing.T, value any) []byte {
 	t.Helper()
 	result, err := json.Marshal(value)

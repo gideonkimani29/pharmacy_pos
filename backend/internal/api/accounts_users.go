@@ -399,6 +399,10 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "validation_error", "User details or password are invalid.", nil)
 		return
 	}
+	if len(input.Password) > 72 {
+		writeError(w, http.StatusBadRequest, "validation_error", "Password cannot exceed 72 bytes.", nil)
+		return
+	}
 	invitation := ""
 	var err error
 	password := input.Password
@@ -470,6 +474,28 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	if !validUserInput(input, false) {
 		writeError(w, http.StatusBadRequest, "validation_error", "User details are invalid.", nil)
 		return
+	}
+	if input.Role != "admin" {
+		var currentRole string
+		if err := s.db.QueryRowContext(r.Context(), `SELECT role FROM users WHERE id = ?`, r.PathValue("id")).Scan(&currentRole); errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "not_found", "User was not found.", nil)
+			return
+		} else if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "Could not validate user role.", nil)
+			return
+		}
+		if currentRole == "admin" {
+			var otherAdmins int
+			if err := s.db.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users
+				WHERE role = 'admin' AND active = 1 AND id <> ?`, r.PathValue("id")).Scan(&otherAdmins); err != nil {
+				writeError(w, http.StatusInternalServerError, "internal_error", "Could not validate administrator status.", nil)
+				return
+			}
+			if otherAdmins == 0 {
+				writeError(w, http.StatusConflict, "last_admin", "At least one active administrator must remain.", nil)
+				return
+			}
+		}
 	}
 	result, err := s.db.ExecContext(r.Context(), `UPDATE users SET name = ?, email = ?, phone = ?, role = ? WHERE id = ?`,
 		strings.TrimSpace(input.Name), strings.ToLower(strings.TrimSpace(input.Email)), strings.TrimSpace(input.Phone), input.Role, r.PathValue("id"))

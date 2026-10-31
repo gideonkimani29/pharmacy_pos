@@ -43,7 +43,8 @@ func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Name = strings.TrimSpace(request.Name)
 	request.Email = strings.ToLower(strings.TrimSpace(request.Email))
-	if request.Name == "" || !strings.Contains(request.Email, "@") || len(request.Password) < 12 {
+	if request.Name == "" || !strings.Contains(request.Email, "@") ||
+		len(request.Password) < 12 || len(request.Password) > 72 {
 		writeError(w, http.StatusBadRequest, "validation_error", "Name, valid email, and a password of at least 12 characters are required.", nil)
 		return
 	}
@@ -214,7 +215,7 @@ func (s *Server) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &request) {
 		return
 	}
-	if request.Token == "" || len(request.Password) < 12 {
+	if request.Token == "" || len(request.Password) < 12 || len(request.Password) > 72 {
 		writeError(w, http.StatusBadRequest, "validation_error", "A valid invitation and password of at least 12 characters are required.", nil)
 		return
 	}

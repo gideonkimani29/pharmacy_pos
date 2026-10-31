@@ -77,6 +77,9 @@ func (s *Server) salesReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) profitReport(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
 	from, to, ok := reportRange(r)
 	if !ok {
 		writeError(w, http.StatusBadRequest, "validation_error", "from and to must be valid ISO-8601 dates in ascending order.", nil)
@@ -115,6 +118,9 @@ func (s *Server) profitReport(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) lossesReport(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
 	from, to, ok := reportRange(r)
 	if !ok {
 		writeError(w, http.StatusBadRequest, "validation_error", "from and to must be valid ISO-8601 dates in ascending order.", nil)

@@ -21,7 +21,7 @@ Use JSON over HTTPS in production, with a versioned prefix such as `/api/v1`. Ke
 | Load/save pharmacy settings | `GET, PUT /settings` |
 | List/create/update/activate users | `GET, POST /users`; `PUT /users/{id}`; `PATCH /users/{id}/active` |
 
-Sales-return lookup and stock reversal are not implemented because the Flutter Returns tab does not yet have a domain repository. Use server-side authorization for every endpoint; client-side role checks are not a security boundary.
+Sales-return lookup and stock reversal are not implemented because the Flutter Returns tab does not yet have a domain repository. Role checks are enforced server-side: cashiers cannot read batch costs, purchase totals, profit/loss reports, or manage users/settings. Client-side role checks are not a security boundary.
 
 ## 2. Run the Go backend
 

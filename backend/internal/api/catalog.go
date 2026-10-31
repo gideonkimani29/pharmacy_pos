@@ -269,6 +269,9 @@ type batchDTO struct {
 }
 
 func (s *Server) listBatches(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
 	rows, err := s.db.QueryContext(r.Context(), `SELECT b.id, b.medicine_id, m.name, b.batch_number, b.supplier_name,
 		b.received_on, b.expiry_date, b.quantity_received, b.quantity_on_hand, b.unit_cost_minor,
 		b.selling_price_minor, m.reorder_level FROM batches b JOIN medicines m ON m.id = b.medicine_id

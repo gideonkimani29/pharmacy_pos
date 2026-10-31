@@ -574,6 +574,9 @@ func (s *Server) recordPurchase(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) listPurchases(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
 	rows, err := s.db.QueryContext(r.Context(), `SELECT p.id, p.reference, COALESCE(s.name, ''), p.invoice_number,
 		p.received_on, p.payment_status, COUNT(pl.id), COALESCE(SUM(pl.quantity), 0), p.total_minor
 		FROM purchases p LEFT JOIN suppliers s ON s.id = p.supplier_id

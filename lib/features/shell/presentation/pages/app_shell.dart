@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_dimens.dart';
-import '../../../../core/constants/app_strings.dart';
-import '../../../../core/widgets/empty_state.dart';
 import '../../../checkout/presentation/pages/pos_page.dart';
 import '../../../customers/presentation/pages/customers_page.dart';
 import '../../../dashboard/presentation/pages/dashboard_page.dart';
@@ -65,12 +63,6 @@ class _AppShellState extends State<AppShell> {
         return const ReportsPage();
       case AppModule.settings:
         return const SettingsPage();
-      default:
-        return EmptyState(
-          icon: _selected.icon,
-          title: _selected.label,
-          message: AppStrings.moduleNotBuilt,
-        );
     }
   }
 }

@@ -189,8 +189,9 @@ class SettingsCubit extends Cubit<SettingsState> {
     final result = await _saveUser(draft, id: id);
     switch (result) {
       case Ok<AppUser>(:final value):
-        final others = state.users.where((u) => u.id != value.id);
-        emit(state.copyWith(users: _sorted([...others, value])));
+        final storedUser = value.copyWith(clearInvitationToken: true);
+        final others = state.users.where((u) => u.id != storedUser.id);
+        emit(state.copyWith(users: _sorted([...others, storedUser])));
         _notify(SettingsStrings.userSaved(value.name));
         if (value.invitationToken case final token?) onInvitation?.call(token);
         return null;

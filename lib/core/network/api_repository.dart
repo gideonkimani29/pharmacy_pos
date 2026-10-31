@@ -25,9 +25,9 @@ abstract class ApiRepository {
       if (error.statusCode == 0) return Err<T>(NetworkFailure(error.message));
       return Err<T>(UnexpectedFailure(error.message));
     } on http.ClientException {
-      return const Err<T>(NetworkFailure());
+      return Err<T>(const NetworkFailure());
     } on TimeoutException {
-      return const Err<T>(NetworkFailure());
+      return Err<T>(const NetworkFailure());
     } on FormatException catch (error) {
       return Err<T>(UnexpectedFailure(error.message));
     }

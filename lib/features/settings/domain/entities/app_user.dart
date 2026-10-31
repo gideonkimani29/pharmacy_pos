@@ -29,7 +29,7 @@ class AppUser extends Equatable {
   /// One-time token returned when the API creates an invited user.
   final String? invitationToken;
 
-  AppUser copyWith({bool? isActive, String? invitationToken}) {
+  AppUser copyWith({bool? isActive, String? invitationToken, bool clearInvitationToken = false}) {
     return AppUser(
       id: id,
       name: name,
@@ -38,7 +38,7 @@ class AppUser extends Equatable {
       role: role,
       isActive: isActive ?? this.isActive,
       lastSignInAt: lastSignInAt,
-      invitationToken: invitationToken ?? this.invitationToken,
+      invitationToken: clearInvitationToken ? null : invitationToken ?? this.invitationToken,
     );
   }
 

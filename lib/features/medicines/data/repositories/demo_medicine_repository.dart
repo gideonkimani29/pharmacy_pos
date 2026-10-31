@@ -5,7 +5,8 @@ import '../../domain/medicine_messages.dart';
 import '../../domain/repositories/medicine_repository.dart';
 
 class DemoMedicineRepository implements MedicineRepository {
-  DemoMedicineRepository({List<Medicine> medicines = const []}) : _items = [...medicines];
+  DemoMedicineRepository({List<Medicine> medicines = const []})
+      : _items = [...medicines];
 
   static const Duration _latency = Duration(milliseconds: 250);
   static const String _idPrefix = 'm';
@@ -47,7 +48,8 @@ class DemoMedicineRepository implements MedicineRepository {
   Future<Result<Medicine>> update(String id, MedicineDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((m) => m.id == id);
-    if (index < 0) return const Err<Medicine>(ValidationFailure(MedicineMessages.notFound));
+    if (index < 0)
+      return const Err<Medicine>(ValidationFailure(MedicineMessages.notFound));
 
     final clash = _clash(draft, exceptId: id);
     if (clash != null) return Err<Medicine>(clash);
@@ -74,7 +76,8 @@ class DemoMedicineRepository implements MedicineRepository {
   Future<Result<Medicine>> setActive(String id, {required bool active}) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((m) => m.id == id);
-    if (index < 0) return const Err<Medicine>(ValidationFailure(MedicineMessages.notFound));
+    if (index < 0)
+      return const Err<Medicine>(ValidationFailure(MedicineMessages.notFound));
     _items[index] = _items[index].copyWith(isActive: active);
     return Ok(_items[index]);
   }
@@ -84,12 +87,12 @@ class DemoMedicineRepository implements MedicineRepository {
     final barcode = draft.barcode.trim().toLowerCase();
     for (final item in _items) {
       if (item.id == exceptId) continue;
-      if (item.sku.toLowerCase() == sku) return const ValidationFailure(MedicineMessages.duplicateSku);
+      if (item.sku.toLowerCase() == sku)
+        return const ValidationFailure(MedicineMessages.duplicateSku);
       if (barcode.isNotEmpty && item.barcode.toLowerCase() == barcode) {
         return const ValidationFailure(MedicineMessages.duplicateBarcode);
       }
     }
     return null;
   }
-
 }

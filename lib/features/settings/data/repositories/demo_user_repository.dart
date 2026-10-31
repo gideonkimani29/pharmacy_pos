@@ -24,7 +24,8 @@ class DemoUserRepository implements UserRepository {
   Future<Result<AppUser>> create(UserDraft draft) async {
     await Future<void>.delayed(_latency);
     if (_emailTaken(draft.email, exceptId: null)) {
-      return const Err<AppUser>(ValidationFailure(SettingsMessages.duplicateEmail));
+      return const Err<AppUser>(
+          ValidationFailure(SettingsMessages.duplicateEmail));
     }
     final user = AppUser(
       id: '$_idPrefix${_counter++}',
@@ -42,13 +43,17 @@ class DemoUserRepository implements UserRepository {
   Future<Result<AppUser>> update(String id, UserDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((u) => u.id == id);
-    if (index < 0) return const Err<AppUser>(ValidationFailure(SettingsMessages.userNotFound));
+    if (index < 0)
+      return const Err<AppUser>(
+          ValidationFailure(SettingsMessages.userNotFound));
     if (_emailTaken(draft.email, exceptId: id)) {
-      return const Err<AppUser>(ValidationFailure(SettingsMessages.duplicateEmail));
+      return const Err<AppUser>(
+          ValidationFailure(SettingsMessages.duplicateEmail));
     }
 
     final current = _items[index];
-    final losesAdmin = current.role == UserRole.admin && draft.role != UserRole.admin;
+    final losesAdmin =
+        current.role == UserRole.admin && draft.role != UserRole.admin;
     if (losesAdmin && current.isActive && _activeAdmins == 1) {
       return const Err<AppUser>(ValidationFailure(SettingsMessages.lastAdmin));
     }
@@ -69,19 +74,24 @@ class DemoUserRepository implements UserRepository {
   Future<Result<AppUser>> setActive(String id, {required bool active}) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((u) => u.id == id);
-    if (index < 0) return const Err<AppUser>(ValidationFailure(SettingsMessages.userNotFound));
+    if (index < 0)
+      return const Err<AppUser>(
+          ValidationFailure(SettingsMessages.userNotFound));
 
     final current = _items[index];
-    if (!active && current.role == UserRole.admin && current.isActive && _activeAdmins == 1) {
+    if (!active &&
+        current.role == UserRole.admin &&
+        current.isActive &&
+        _activeAdmins == 1) {
       return const Err<AppUser>(ValidationFailure(SettingsMessages.lastAdmin));
     }
     _items[index] = current.copyWith(isActive: active);
     return Ok(_items[index]);
   }
 
-  int get _activeAdmins => _items.where((u) => u.role == UserRole.admin && u.isActive).length;
+  int get _activeAdmins =>
+      _items.where((u) => u.role == UserRole.admin && u.isActive).length;
 
-  bool _emailTaken(String email, {required String? exceptId}) =>
-      _items.any((u) => u.id != exceptId && u.email.toLowerCase() == email.toLowerCase());
-
+  bool _emailTaken(String email, {required String? exceptId}) => _items.any(
+      (u) => u.id != exceptId && u.email.toLowerCase() == email.toLowerCase());
 }

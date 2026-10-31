@@ -3,7 +3,8 @@ import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 
 class DemoProductRepository implements ProductRepository {
-  DemoProductRepository({List<Product> products = const []}) : _catalog = [...products];
+  DemoProductRepository({List<Product> products = const []})
+      : _catalog = [...products];
 
   static const Duration _latency = Duration(milliseconds: 120);
   final List<Product> _catalog;

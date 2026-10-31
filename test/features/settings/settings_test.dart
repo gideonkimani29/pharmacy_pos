@@ -48,15 +48,44 @@ const AppSettings _testSettings = AppSettings(
 );
 
 final List<AppUser> _testUsers = [
-  AppUser(id: 'u1', name: 'Alex Admin', email: 'alex.admin@testing.example', phone: '', role: UserRole.admin, isActive: true, lastSignInAt: _now),
-  AppUser(id: 'u2', name: 'Pat Pharmacist', email: 'pat.pharmacist@testing.example', phone: '', role: UserRole.pharmacist, isActive: true, lastSignInAt: _now.subtract(const Duration(days: 1))),
-  AppUser(id: 'u3', name: 'Casey Cashier', email: 'casey.cashier@testing.example', phone: '', role: UserRole.cashier, isActive: true, lastSignInAt: _now),
-  AppUser(id: 'u4', name: 'Sam Former', email: 'sam.former@testing.example', phone: '', role: UserRole.cashier, isActive: false, lastSignInAt: _now.subtract(const Duration(days: 120))),
+  AppUser(
+      id: 'u1',
+      name: 'Alex Admin',
+      email: 'alex.admin@testing.example',
+      phone: '',
+      role: UserRole.admin,
+      isActive: true,
+      lastSignInAt: _now),
+  AppUser(
+      id: 'u2',
+      name: 'Pat Pharmacist',
+      email: 'pat.pharmacist@testing.example',
+      phone: '',
+      role: UserRole.pharmacist,
+      isActive: true,
+      lastSignInAt: _now.subtract(const Duration(days: 1))),
+  AppUser(
+      id: 'u3',
+      name: 'Casey Cashier',
+      email: 'casey.cashier@testing.example',
+      phone: '',
+      role: UserRole.cashier,
+      isActive: true,
+      lastSignInAt: _now),
+  AppUser(
+      id: 'u4',
+      name: 'Sam Former',
+      email: 'sam.former@testing.example',
+      phone: '',
+      role: UserRole.cashier,
+      isActive: false,
+      lastSignInAt: _now.subtract(const Duration(days: 120))),
 ];
 
 void main() {
   group('tax rate typing', () {
-    test('a typed percent becomes basis points with the same parser as money', () {
+    test('a typed percent becomes basis points with the same parser as money',
+        () {
       expect(Money.parseMinor('16'), 1600);
       expect(Money.parseMinor('16.5'), 1650);
       expect(Money.parseMinor('0'), 0);
@@ -92,30 +121,43 @@ void main() {
     });
 
     test('needs a pharmacy name', () async {
-      expect(await failureOf(base.copyWith(pharmacyName: '  ')), SettingsMessages.nameMissing);
+      expect(await failureOf(base.copyWith(pharmacyName: '  ')),
+          SettingsMessages.nameMissing);
     });
 
     test('phone, email and KRA PIN are checked only when entered', () async {
-      expect(await failureOf(base.copyWith(phone: '', email: '', taxPin: '')), isNull);
-      expect(await failureOf(base.copyWith(phone: '12345')), SettingsMessages.phoneInvalid);
-      expect(await failureOf(base.copyWith(email: 'nope')), SettingsMessages.emailInvalid);
-      expect(await failureOf(base.copyWith(taxPin: '123456789')), SettingsMessages.pinInvalid);
-      expect(await failureOf(base.copyWith(taxPin: 'A12345678B')), SettingsMessages.pinInvalid);
+      expect(await failureOf(base.copyWith(phone: '', email: '', taxPin: '')),
+          isNull);
+      expect(await failureOf(base.copyWith(phone: '12345')),
+          SettingsMessages.phoneInvalid);
+      expect(await failureOf(base.copyWith(email: 'nope')),
+          SettingsMessages.emailInvalid);
+      expect(await failureOf(base.copyWith(taxPin: '123456789')),
+          SettingsMessages.pinInvalid);
+      expect(await failureOf(base.copyWith(taxPin: 'A12345678B')),
+          SettingsMessages.pinInvalid);
     });
 
     test('tax rate must be between 0 and 100 percent', () async {
-      expect(await failureOf(base.copyWith(taxRateBasisPoints: -1)), SettingsMessages.taxInvalid);
-      expect(await failureOf(base.copyWith(taxRateBasisPoints: 10001)), SettingsMessages.taxInvalid);
+      expect(await failureOf(base.copyWith(taxRateBasisPoints: -1)),
+          SettingsMessages.taxInvalid);
+      expect(await failureOf(base.copyWith(taxRateBasisPoints: 10001)),
+          SettingsMessages.taxInvalid);
       expect(await failureOf(base.copyWith(taxRateBasisPoints: 1600)), isNull);
       expect(await failureOf(base.copyWith(taxRateBasisPoints: 10000)), isNull);
     });
 
     test('discount limit, copies and footer length have limits', () async {
-      expect(await failureOf(base.copyWith(maxCashierDiscountPercent: 101)), SettingsMessages.discountInvalid);
-      expect(await failureOf(base.copyWith(maxCashierDiscountPercent: -1)), SettingsMessages.discountInvalid);
-      expect(await failureOf(base.copyWith(receiptCopies: 0)), SettingsMessages.copiesInvalid);
-      expect(await failureOf(base.copyWith(receiptCopies: 6)), SettingsMessages.copiesInvalid);
-      expect(await failureOf(base.copyWith(receiptFooter: 'x' * 161)), SettingsMessages.footerTooLong);
+      expect(await failureOf(base.copyWith(maxCashierDiscountPercent: 101)),
+          SettingsMessages.discountInvalid);
+      expect(await failureOf(base.copyWith(maxCashierDiscountPercent: -1)),
+          SettingsMessages.discountInvalid);
+      expect(await failureOf(base.copyWith(receiptCopies: 0)),
+          SettingsMessages.copiesInvalid);
+      expect(await failureOf(base.copyWith(receiptCopies: 6)),
+          SettingsMessages.copiesInvalid);
+      expect(await failureOf(base.copyWith(receiptFooter: 'x' * 161)),
+          SettingsMessages.footerTooLong);
       expect(await failureOf(base.copyWith(receiptFooter: 'x' * 160)), isNull);
     });
   });
@@ -146,25 +188,38 @@ void main() {
     }
 
     test('creates an active user and stores the email in lower case', () async {
-      final result = await saveUser(draft(email: 'New.Person@DemoPharmacy.example'));
+      final result =
+          await saveUser(draft(email: 'New.Person@DemoPharmacy.example'));
       final user = (result as Ok<AppUser>).value;
       expect(user.isActive, isTrue);
       expect(user.email, 'new.person@demopharmacy.example');
     });
 
-    test('needs a name and a valid email; the phone is optional but checked when given', () async {
-      expect(await failureOf(draft(name: ' ')), SettingsMessages.userNameMissing);
-      expect(await failureOf(draft(email: '')), SettingsMessages.userEmailMissing);
-      expect(await failureOf(draft(email: 'not-an-email')), SettingsMessages.emailInvalid);
-      expect(await failureOf(draft(phone: '123')), SettingsMessages.phoneInvalid);
+    test(
+        'needs a name and a valid email; the phone is optional but checked when given',
+        () async {
+      expect(
+          await failureOf(draft(name: ' ')), SettingsMessages.userNameMissing);
+      expect(
+          await failureOf(draft(email: '')), SettingsMessages.userEmailMissing);
+      expect(await failureOf(draft(email: 'not-an-email')),
+          SettingsMessages.emailInvalid);
+      expect(
+          await failureOf(draft(phone: '123')), SettingsMessages.phoneInvalid);
       expect(await failureOf(draft(phone: '')), isNull);
     });
 
-    test('rejects an email already in use, in any letter case, but allows re-saving the same user', () async {
-      expect(await failureOf(draft(email: 'ALEX.admin@testing.example')), SettingsMessages.duplicateEmail);
+    test(
+        'rejects an email already in use, in any letter case, but allows re-saving the same user',
+        () async {
+      expect(await failureOf(draft(email: 'ALEX.admin@testing.example')),
+          SettingsMessages.duplicateEmail);
       expect(
         await failureOf(
-          draft(name: 'Alex Admin', email: 'alex.admin@testing.example', role: UserRole.admin),
+          draft(
+              name: 'Alex Admin',
+              email: 'alex.admin@testing.example',
+              role: UserRole.admin),
           id: 'u1',
         ),
         isNull,
@@ -174,17 +229,25 @@ void main() {
     test('the only active admin cannot be demoted or deactivated', () async {
       expect(
         await failureOf(
-          draft(name: 'Alex Admin', email: 'alex.admin@testing.example', role: UserRole.pharmacist),
+          draft(
+              name: 'Alex Admin',
+              email: 'alex.admin@testing.example',
+              role: UserRole.pharmacist),
           id: 'u1',
         ),
         SettingsMessages.lastAdmin,
       );
       final result = await setActive('u1', active: false);
-      expect((result as Err<AppUser>).failure.message, SettingsMessages.lastAdmin);
+      expect(
+          (result as Err<AppUser>).failure.message, SettingsMessages.lastAdmin);
     });
 
-    test('once there is a second active admin, the first can be deactivated', () async {
-      await saveUser(draft(name: 'Second Admin', email: 'second.admin@demopharmacy.example', role: UserRole.admin));
+    test('once there is a second active admin, the first can be deactivated',
+        () async {
+      await saveUser(draft(
+          name: 'Second Admin',
+          email: 'second.admin@demopharmacy.example',
+          role: UserRole.admin));
       final result = await setActive('u1', active: false);
       expect((result as Ok<AppUser>).value.isActive, isFalse);
     });
@@ -196,17 +259,22 @@ void main() {
   });
 
   group('SettingsCubit', () {
-    test('loading fills both the saved and the draft copy, with users sorted by name', () async {
+    test(
+        'loading fills both the saved and the draft copy, with users sorted by name',
+        () async {
       final cubit = _cubit();
       await cubit.load();
       expect(cubit.state.status, SettingsStatus.loaded);
       expect(cubit.state.draft, cubit.state.saved);
       expect(cubit.state.isDirty, isFalse);
-      expect(cubit.state.users.map((u) => u.name), ['Alex Admin', 'Casey Cashier', 'Pat Pharmacist', 'Sam Former']);
+      expect(cubit.state.users.map((u) => u.name),
+          ['Alex Admin', 'Casey Cashier', 'Pat Pharmacist', 'Sam Former']);
       await cubit.close();
     });
 
-    test('editing makes the form dirty and discard puts it back, bumping the form version', () async {
+    test(
+        'editing makes the form dirty and discard puts it back, bumping the form version',
+        () async {
       final cubit = _cubit();
       await cubit.load();
       final version = cubit.state.formVersion;
@@ -226,7 +294,8 @@ void main() {
       await cubit.close();
     });
 
-    test('saving an invalid form shows the message and keeps the edits', () async {
+    test('saving an invalid form shows the message and keeps the edits',
+        () async {
       final cubit = _cubit();
       await cubit.load();
       cubit.edit((s) => s.copyWith(pharmacyName: '  '));
@@ -235,15 +304,21 @@ void main() {
       expect(cubit.state.isDirty, isTrue);
       expect(cubit.state.saving, isFalse);
       cubit.edit((s) => s.copyWith(pharmacyName: 'Test Pharmacy'));
-      expect(cubit.state.saveError, isNull); // the message clears as soon as the user edits again
+      expect(cubit.state.saveError,
+          isNull); // the message clears as soon as the user edits again
       await cubit.close();
     });
 
-    test('saving a valid form stores the tidied values and clears the dirty state', () async {
+    test(
+        'saving a valid form stores the tidied values and clears the dirty state',
+        () async {
       final cubit = _cubit();
       await cubit.load();
       final version = cubit.state.formVersion;
-      cubit.edit((s) => s.copyWith(phone: '+254 700 000 111', taxPin: 'a123456789b', taxRateBasisPoints: 1600));
+      cubit.edit((s) => s.copyWith(
+          phone: '+254 700 000 111',
+          taxPin: 'a123456789b',
+          taxRateBasisPoints: 1600));
       await cubit.save();
       expect(cubit.state.isDirty, isFalse);
       expect(cubit.state.saved!.phone, '+254700000111');
@@ -254,7 +329,9 @@ void main() {
       await cubit.close();
     });
 
-    test('adding a user puts them in the sorted list; a duplicate email returns the message', () async {
+    test(
+        'adding a user puts them in the sorted list; a duplicate email returns the message',
+        () async {
       final cubit = _cubit();
       await cubit.load();
       final ok = await cubit.saveUser(const UserDraft(
@@ -264,7 +341,12 @@ void main() {
         role: UserRole.pharmacist,
       ));
       expect(ok, isNull);
-      expect(cubit.state.users.map((u) => u.name).toList().indexOf('Bea Pharmacist'), 1);
+      expect(
+          cubit.state.users
+              .map((u) => u.name)
+              .toList()
+              .indexOf('Bea Pharmacist'),
+          1);
 
       final dup = await cubit.saveUser(const UserDraft(
         name: 'Other',
@@ -276,21 +358,28 @@ void main() {
       await cubit.close();
     });
 
-    test('deactivating the only admin is refused with a notice and changes nothing', () async {
+    test(
+        'deactivating the only admin is refused with a notice and changes nothing',
+        () async {
       final cubit = _cubit();
       await cubit.load();
-      await cubit.toggleUserActive(cubit.state.users.firstWhere((u) => u.id == 'u1'));
+      await cubit
+          .toggleUserActive(cubit.state.users.firstWhere((u) => u.id == 'u1'));
       expect(cubit.state.notice!.message, SettingsMessages.lastAdmin);
-      expect(cubit.state.users.firstWhere((u) => u.id == 'u1').isActive, isTrue);
+      expect(
+          cubit.state.users.firstWhere((u) => u.id == 'u1').isActive, isTrue);
       await cubit.close();
     });
 
     test('toggling a cashier updates the list and raises a notice', () async {
       final cubit = _cubit();
       await cubit.load();
-      await cubit.toggleUserActive(cubit.state.users.firstWhere((u) => u.id == 'u3'));
-      expect(cubit.state.users.firstWhere((u) => u.id == 'u3').isActive, isFalse);
-      expect(cubit.state.notice!.message, SettingsStrings.userDeactivated('Casey Cashier'));
+      await cubit
+          .toggleUserActive(cubit.state.users.firstWhere((u) => u.id == 'u3'));
+      expect(
+          cubit.state.users.firstWhere((u) => u.id == 'u3').isActive, isFalse);
+      expect(cubit.state.notice!.message,
+          SettingsStrings.userDeactivated('Casey Cashier'));
       await cubit.close();
     });
 

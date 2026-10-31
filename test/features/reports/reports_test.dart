@@ -70,7 +70,14 @@ class _ReportRepositoryFixture implements ReportRepository {
       (3, 'Test expired medicine', 'TEST-1', 14, 8000, LossReason.expired),
       (10, 'Test damaged medicine', 'TEST-2', 2, 36000, LossReason.damaged),
       (15, 'Test expired medicine', 'TEST-3', 60, 16500, LossReason.expired),
-      (20, 'Test counted medicine', 'TEST-4', 5, 2000, LossReason.countShortage),
+      (
+        20,
+        'Test counted medicine',
+        'TEST-4',
+        5,
+        2000,
+        LossReason.countShortage
+      ),
       (40, 'Older test medicine', 'TEST-5', 8, 30000, LossReason.damaged),
       (75, 'Older test medicine', 'TEST-6', 12, 21000, LossReason.expired),
     ];
@@ -103,7 +110,8 @@ ReportsCubit _cubit() {
 void main() {
   group('ReportRange', () {
     test('ignores the time of day and counts both ends', () {
-      final range = ReportRange(from: DateTime(2026, 10, 1, 23, 59), to: DateTime(2026, 10, 6, 0, 1));
+      final range = ReportRange(
+          from: DateTime(2026, 10, 1, 23, 59), to: DateTime(2026, 10, 6, 0, 1));
       expect(range.from, DateTime(2026, 10, 1));
       expect(range.to, DateTime(2026, 10, 6));
       expect(range.dayCount, 6);
@@ -123,32 +131,45 @@ void main() {
 
     test('rejects a start date after the end date', () async {
       expect(
-        await failureOf(ReportRange(from: DateTime(2026, 10, 6), to: DateTime(2026, 10, 1))),
+        await failureOf(ReportRange(
+            from: DateTime(2026, 10, 6), to: DateTime(2026, 10, 1))),
         ReportMessages.rangeReversed,
       );
     });
 
     test('allows up to 366 days and rejects more', () async {
       final end = DateTime(2026, 10, 6);
-      expect(await failureOf(ReportRange(from: DateTime(2026, 10, 6 - 365), to: end)), isNull);
-      expect(await failureOf(ReportRange(from: DateTime(2026, 10, 6 - 366), to: end)), ReportMessages.rangeTooLong);
+      expect(
+          await failureOf(
+              ReportRange(from: DateTime(2026, 10, 6 - 365), to: end)),
+          isNull);
+      expect(
+          await failureOf(
+              ReportRange(from: DateTime(2026, 10, 6 - 366), to: end)),
+          ReportMessages.rangeTooLong);
     });
   });
 
   group('report fixtures agree with each other', () {
-    final range = ReportRange(from: DateTime(2026, 9, 7), to: DateTime(2026, 10, 6));
+    final range =
+        ReportRange(from: DateTime(2026, 9, 7), to: DateTime(2026, 10, 6));
 
-    test('sales: one row per day, net is gross minus discount, payments add up to net', () async {
-      final report = (await _repository().sales(range) as Ok<SalesReport>).value;
+    test(
+        'sales: one row per day, net is gross minus discount, payments add up to net',
+        () async {
+      final report =
+          (await _repository().sales(range) as Ok<SalesReport>).value;
       expect(report.days.length, 30);
       expect(report.netMinor, report.grossMinor - report.discountMinor);
-      expect(report.byPayment.fold(0, (sum, p) => sum + p.amountMinor), report.netMinor);
+      expect(report.byPayment.fold(0, (sum, p) => sum + p.amountMinor),
+          report.netMinor);
       expect(report.days.first.date, DateTime(2026, 9, 7));
       expect(report.days.last.date, DateTime(2026, 10, 6));
       expect(report.averageSaleMinor, report.netMinor ~/ report.transactions);
     });
 
-    test('profit: revenue equals net sales and cost is below revenue', () async {
+    test('profit: revenue equals net sales and cost is below revenue',
+        () async {
       final repository = _repository();
       final sales = (await repository.sales(range) as Ok<SalesReport>).value;
       final profit = (await repository.profit(range) as Ok<ProfitReport>).value;
@@ -161,14 +182,18 @@ void main() {
 
     test('the same period always gives the same figures', () async {
       final first = (await _repository().sales(range) as Ok<SalesReport>).value;
-      final second = (await _repository().sales(range) as Ok<SalesReport>).value;
+      final second =
+          (await _repository().sales(range) as Ok<SalesReport>).value;
       expect(first, second);
     });
 
-    test('losses: only events inside the period, with totals by reason', () async {
+    test('losses: only events inside the period, with totals by reason',
+        () async {
       final repository = _repository();
-      final week = ReportRange(from: DateTime(2026, 9, 30), to: DateTime(2026, 10, 6));
-      final weekReport = (await repository.losses(week) as Ok<LossesReport>).value;
+      final week =
+          ReportRange(from: DateTime(2026, 9, 30), to: DateTime(2026, 10, 6));
+      final weekReport =
+          (await repository.losses(week) as Ok<LossesReport>).value;
       expect(weekReport.rows.length, 1);
       expect(weekReport.totalLossMinor, 112000); // 14 Aspirin at KES 80
 
@@ -178,7 +203,8 @@ void main() {
       expect(month.lossFor(LossReason.expired), 1102000);
       expect(month.lossFor(LossReason.damaged), 72000);
       expect(month.lossFor(LossReason.countShortage), 10000);
-      expect(month.rows.first.date.isAfter(month.rows.last.date), isTrue); // newest first
+      expect(month.rows.first.date.isAfter(month.rows.last.date),
+          isTrue); // newest first
     });
   });
 
@@ -203,12 +229,17 @@ void main() {
       expect(ReportCsv.cell('say "hi"'), '"say ""hi"""');
     });
 
-    test('sales CSV has a header, one line per day, a total, and the payment split, with plain amounts', () async {
-      final range = ReportRange(from: DateTime(2026, 9, 30), to: DateTime(2026, 10, 6));
-      final report = (await _repository().sales(range) as Ok<SalesReport>).value;
+    test(
+        'sales CSV has a header, one line per day, a total, and the payment split, with plain amounts',
+        () async {
+      final range =
+          ReportRange(from: DateTime(2026, 9, 30), to: DateTime(2026, 10, 6));
+      final report =
+          (await _repository().sales(range) as Ok<SalesReport>).value;
       final lines = ReportCsv.sales(report).split('\n');
       expect(lines.first, 'Date,Sales,Items,Gross,Discount,Net');
-      expect(lines.length, 7 + 8); // header + 7 days + total + blank + split header + 4 methods
+      expect(lines.length,
+          7 + 8); // header + 7 days + total + blank + split header + 4 methods
       expect(lines[1].startsWith('2026-09-30,'), isTrue);
       expect(lines[8].startsWith('Total,'), isTrue);
       expect(ReportCsv.sales(report).contains('KES'), isFalse);
@@ -218,10 +249,14 @@ void main() {
   group('ReportsCubit', () {
     test('presets map to the right days', () {
       ReportRange rangeFor(RangePreset p) => ReportsCubit.rangeFor(p, _now);
-      expect(rangeFor(RangePreset.today), ReportRange(from: DateTime(2026, 10, 6), to: DateTime(2026, 10, 6)));
-      expect(rangeFor(RangePreset.last7), ReportRange(from: DateTime(2026, 9, 30), to: DateTime(2026, 10, 6)));
-      expect(rangeFor(RangePreset.last30), ReportRange(from: DateTime(2026, 9, 7), to: DateTime(2026, 10, 6)));
-      expect(rangeFor(RangePreset.thisMonth), ReportRange(from: DateTime(2026, 10, 1), to: DateTime(2026, 10, 6)));
+      expect(rangeFor(RangePreset.today),
+          ReportRange(from: DateTime(2026, 10, 6), to: DateTime(2026, 10, 6)));
+      expect(rangeFor(RangePreset.last7),
+          ReportRange(from: DateTime(2026, 9, 30), to: DateTime(2026, 10, 6)));
+      expect(rangeFor(RangePreset.last30),
+          ReportRange(from: DateTime(2026, 9, 7), to: DateTime(2026, 10, 6)));
+      expect(rangeFor(RangePreset.thisMonth),
+          ReportRange(from: DateTime(2026, 10, 1), to: DateTime(2026, 10, 6)));
     });
 
     test('starts on the last 7 days and loads all three reports', () async {
@@ -247,23 +282,27 @@ void main() {
 
     test('a custom range is used as given', () async {
       final cubit = _cubit();
-      await cubit.setCustomRange(ReportRange(from: DateTime(2026, 8, 1), to: DateTime(2026, 8, 31)));
+      await cubit.setCustomRange(
+          ReportRange(from: DateTime(2026, 8, 1), to: DateTime(2026, 8, 31)));
       expect(cubit.state.preset, RangePreset.custom);
       expect(cubit.state.sales!.days.length, 31);
       await cubit.close();
     });
 
-    test('an invalid range fails but keeps the figures already on screen', () async {
+    test('an invalid range fails but keeps the figures already on screen',
+        () async {
       final cubit = _cubit();
       await cubit.load();
-      await cubit.setCustomRange(ReportRange(from: DateTime(2026, 10, 6), to: DateTime(2026, 10, 1)));
+      await cubit.setCustomRange(
+          ReportRange(from: DateTime(2026, 10, 6), to: DateTime(2026, 10, 1)));
       expect(cubit.state.status, ReportsStatus.failure);
       expect(cubit.state.failure!.message, ReportMessages.rangeReversed);
       expect(cubit.state.sales, isNotNull);
       await cubit.close();
     });
 
-    test('CSV follows the tab and is null before anything has loaded', () async {
+    test('CSV follows the tab and is null before anything has loaded',
+        () async {
       final cubit = _cubit();
       expect(cubit.currentCsv(), isNull);
       await cubit.load();

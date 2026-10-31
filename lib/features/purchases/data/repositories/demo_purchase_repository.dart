@@ -24,7 +24,8 @@ class DemoPurchaseRepository implements PurchaseRepository {
   @override
   Future<Result<List<Purchase>>> list() async {
     await Future<void>.delayed(_latency);
-    final sorted = [..._purchases]..sort((a, b) => b.receivedOn.compareTo(a.receivedOn));
+    final sorted = [..._purchases]
+      ..sort((a, b) => b.receivedOn.compareTo(a.receivedOn));
     return Ok(sorted);
   }
 

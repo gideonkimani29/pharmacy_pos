@@ -40,8 +40,19 @@ void main() {
 
   List<StockBatch> testBatches() => [
         batch(id: 'b1', medicineId: 'm1', expiresInDays: 420, onHand: 60),
-        batch(id: 'b2', medicineId: 'm1', expiresInDays: 600, onHand: 80, batchNumber: 'PN2503', supplierName: 'Nairobi Generics Depot'),
-        batch(id: 'b5', medicineId: 'm3', expiresInDays: 210, onHand: 8, reorder: 25),
+        batch(
+            id: 'b2',
+            medicineId: 'm1',
+            expiresInDays: 600,
+            onHand: 80,
+            batchNumber: 'PN2503',
+            supplierName: 'Nairobi Generics Depot'),
+        batch(
+            id: 'b5',
+            medicineId: 'm3',
+            expiresInDays: 210,
+            onHand: 8,
+            reorder: 25),
         batch(id: 'b6', medicineId: 'm4', expiresInDays: 48, onHand: 25),
         batch(id: 'b9', medicineId: 'm6', expiresInDays: 18, onHand: 71),
         batch(id: 'b10', medicineId: 'm7', expiresInDays: 160, onHand: 0),
@@ -50,7 +61,9 @@ void main() {
       ];
 
   group('StockBatch.expiryAt', () {
-    test('uses the 30/60/90 day bands and treats the expiry date itself as sellable', () {
+    test(
+        'uses the 30/60/90 day bands and treats the expiry date itself as sellable',
+        () {
       expect(batch(expiresInDays: -1).expiryAt(today), BatchExpiry.expired);
       expect(batch(expiresInDays: 0).expiryAt(today), BatchExpiry.within30);
       expect(batch(expiresInDays: 30).expiryAt(today), BatchExpiry.within30);
@@ -66,7 +79,8 @@ void main() {
     late AdjustStock useCase;
 
     // A fresh repository per test: a successful adjustment changes the stored quantity.
-    setUp(() => useCase = AdjustStock(DemoStockRepository(batches: testBatches())));
+    setUp(() =>
+        useCase = AdjustStock(DemoStockRepository(batches: testBatches())));
 
     StockAdjustmentDraft draft({
       int previous = 25,
@@ -94,18 +108,28 @@ void main() {
       expect(await failureOf(draft(next: 25)), StockMessages.noChange);
     });
 
-    test('write-off reasons can only reduce the quantity; a count correction can raise it', () async {
+    test(
+        'write-off reasons can only reduce the quantity; a count correction can raise it',
+        () async {
       expect(await failureOf(draft(next: 30)), StockMessages.mustDecrease);
-      expect(await failureOf(draft(next: 30, reason: StockAdjustmentReason.countCorrection)), isNull);
+      expect(
+          await failureOf(
+              draft(next: 30, reason: StockAdjustmentReason.countCorrection)),
+          isNull);
     });
 
     test('"Other" needs a note', () async {
-      expect(await failureOf(draft(reason: StockAdjustmentReason.other)), StockMessages.noteRequired);
-      expect(await failureOf(draft(reason: StockAdjustmentReason.other, note: 'Spilled')), isNull);
+      expect(await failureOf(draft(reason: StockAdjustmentReason.other)),
+          StockMessages.noteRequired);
+      expect(
+          await failureOf(
+              draft(reason: StockAdjustmentReason.other, note: 'Spilled')),
+          isNull);
     });
 
     test('rejects an adjustment based on a stale quantity', () async {
-      expect(await failureOf(draft(previous: 999, next: 5)), StockMessages.changedElsewhere);
+      expect(await failureOf(draft(previous: 999, next: 5)),
+          StockMessages.changedElsewhere);
     });
   });
 
@@ -119,7 +143,9 @@ void main() {
       );
     }
 
-    test('FEFO picks the earliest-expiring batch with stock that has not expired', () async {
+    test(
+        'FEFO picks the earliest-expiring batch with stock that has not expired',
+        () async {
       final cubit = build();
       await cubit.load();
       final next = cubit.state.fefoNextBatchIds;
@@ -134,22 +160,27 @@ void main() {
       await cubit.close();
     });
 
-    test('expired stock is excluded from sellable units and counted for write-off', () async {
+    test(
+        'expired stock is excluded from sellable units and counted for write-off',
+        () async {
       final cubit = build();
       await cubit.load();
       expect(cubit.state.expiredUnits, 14);
-      final total = cubit.state.batches.fold(0, (sum, b) => sum + b.quantityOnHand);
+      final total =
+          cubit.state.batches.fold(0, (sum, b) => sum + b.quantityOnHand);
       expect(cubit.state.sellableUnits, total - 14);
       await cubit.close();
     });
 
-    test('filters: expired shows only expired batches that still hold stock', () async {
+    test('filters: expired shows only expired batches that still hold stock',
+        () async {
       final cubit = build();
       await cubit.load();
       cubit.setFilter(StockFilter.expired);
       expect(cubit.state.visibleBatches.map((b) => b.id), ['b18']);
       cubit.setFilter(StockFilter.empty);
-      expect(cubit.state.visibleBatches.map((b) => b.id).toSet(), {'b10', 'b19'});
+      expect(
+          cubit.state.visibleBatches.map((b) => b.id).toSet(), {'b10', 'b19'});
       await cubit.close();
     });
 
@@ -157,15 +188,19 @@ void main() {
       final cubit = build();
       await cubit.load();
       final byId = {for (final s in cubit.state.summaries) s.medicineId: s};
-      expect(byId['m7']!.level, SellableLevel.out); // Losec: only an empty batch
-      expect(byId['m3']!.level, SellableLevel.low); // ORS: 8 left, reorder at 25
-      expect(byId['m16']!.level, SellableLevel.out); // Aspirin: stock exists but it has expired
+      expect(
+          byId['m7']!.level, SellableLevel.out); // Losec: only an empty batch
+      expect(
+          byId['m3']!.level, SellableLevel.low); // ORS: 8 left, reorder at 25
+      expect(byId['m16']!.level,
+          SellableLevel.out); // Aspirin: stock exists but it has expired
       expect(byId['m1']!.level, SellableLevel.ok);
       expect(byId['m1']!.sellableUnits, 140);
       await cubit.close();
     });
 
-    test('writing off an expired batch updates the list and the totals', () async {
+    test('writing off an expired batch updates the list and the totals',
+        () async {
       final cubit = build();
       await cubit.load();
       final error = await cubit.adjust(const StockAdjustmentDraft(
@@ -177,7 +212,9 @@ void main() {
       ));
       expect(error, isNull);
       expect(cubit.state.expiredUnits, 0);
-      expect(cubit.state.batches.firstWhere((b) => b.id == 'b18').quantityOnHand, 0);
+      expect(
+          cubit.state.batches.firstWhere((b) => b.id == 'b18').quantityOnHand,
+          0);
       expect(cubit.state.notice, isNotNull);
       await cubit.close();
     });
@@ -188,7 +225,10 @@ void main() {
       cubit.setQuery('pn2503');
       expect(cubit.state.visibleBatches.single.id, 'b2');
       cubit.setQuery('nairobi generics');
-      expect(cubit.state.visibleBatches.every((b) => b.supplierName == 'Nairobi Generics Depot'), isTrue);
+      expect(
+          cubit.state.visibleBatches
+              .every((b) => b.supplierName == 'Nairobi Generics Depot'),
+          isTrue);
       await cubit.close();
     });
   });

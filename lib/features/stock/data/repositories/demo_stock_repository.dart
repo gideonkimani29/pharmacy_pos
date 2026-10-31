@@ -5,7 +5,8 @@ import '../../domain/repositories/stock_repository.dart';
 import '../../domain/stock_messages.dart';
 
 class DemoStockRepository implements StockRepository {
-  DemoStockRepository({List<StockBatch> batches = const []}) : _batches = [...batches];
+  DemoStockRepository({List<StockBatch> batches = const []})
+      : _batches = [...batches];
 
   static const Duration _latency = Duration(milliseconds: 250);
 
@@ -21,11 +22,14 @@ class DemoStockRepository implements StockRepository {
   Future<Result<StockBatch>> adjust(StockAdjustmentDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _batches.indexWhere((b) => b.id == draft.batchId);
-    if (index < 0) return const Err<StockBatch>(ValidationFailure(StockMessages.notFound));
+    if (index < 0)
+      return const Err<StockBatch>(ValidationFailure(StockMessages.notFound));
     if (_batches[index].quantityOnHand != draft.previousQuantity) {
-      return const Err<StockBatch>(ValidationFailure(StockMessages.changedElsewhere));
+      return const Err<StockBatch>(
+          ValidationFailure(StockMessages.changedElsewhere));
     }
-    _batches[index] = _batches[index].copyWith(quantityOnHand: draft.newQuantity);
+    _batches[index] =
+        _batches[index].copyWith(quantityOnHand: draft.newQuantity);
     return Ok(_batches[index]);
   }
 }

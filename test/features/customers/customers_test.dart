@@ -16,7 +16,8 @@ CustomerDraft draft({
   String email = '',
   int limit = 100000,
 }) {
-  return CustomerDraft(name: name, phone: phone, email: email, creditLimitMinor: limit);
+  return CustomerDraft(
+      name: name, phone: phone, email: email, creditLimitMinor: limit);
 }
 
 CustomerAccountsCubit buildCubit() {
@@ -32,14 +33,78 @@ CustomerAccountsCubit buildCubit() {
 final DateTime _testToday = DateTime(2026, 10, 6);
 
 final List<CustomerAccount> _testCustomers = [
-  CustomerAccount(id: 'c1', name: 'Mary Chebet', phone: '+254700000001', email: 'mary.chebet@example.com', creditLimitMinor: 500000, balanceMinor: 120000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 2))),
-  CustomerAccount(id: 'c2', name: 'Uasin Gishu Community Clinic', phone: '+254700000002', email: 'pharmacy@ugclinic.example', creditLimitMinor: 5000000, balanceMinor: 3250000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 1))),
-  CustomerAccount(id: 'c3', name: 'Kapsabet SACCO Staff Account', phone: '+254700000003', email: '', creditLimitMinor: 2000000, balanceMinor: 2350000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 6))),
-  CustomerAccount(id: 'c4', name: 'John Kiprono', phone: '+254700000004', email: '', creditLimitMinor: 0, balanceMinor: 0, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 14))),
-  CustomerAccount(id: 'c5', name: 'Grace Wanjiku', phone: '+254712345678', email: 'grace.w@example.com', creditLimitMinor: 1000000, balanceMinor: 0, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 4))),
-  CustomerAccount(id: 'c6', name: 'Eldoret Day Care Centre', phone: '+254722334455', email: '', creditLimitMinor: 1500000, balanceMinor: 480000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 9))),
-  CustomerAccount(id: 'c7', name: 'Peter Otieno', phone: '+254733445566', email: '', creditLimitMinor: 300000, balanceMinor: 0, isActive: false, lastPurchaseOn: _testToday.subtract(const Duration(days: 210))),
-  CustomerAccount(id: 'c8', name: 'Faith Jepchirchir', phone: '+254744556677', email: 'faith.j@example.com', creditLimitMinor: 800000, balanceMinor: 800000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 11))),
+  CustomerAccount(
+      id: 'c1',
+      name: 'Mary Chebet',
+      phone: '+254700000001',
+      email: 'mary.chebet@example.com',
+      creditLimitMinor: 500000,
+      balanceMinor: 120000,
+      isActive: true,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 2))),
+  CustomerAccount(
+      id: 'c2',
+      name: 'Uasin Gishu Community Clinic',
+      phone: '+254700000002',
+      email: 'pharmacy@ugclinic.example',
+      creditLimitMinor: 5000000,
+      balanceMinor: 3250000,
+      isActive: true,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 1))),
+  CustomerAccount(
+      id: 'c3',
+      name: 'Kapsabet SACCO Staff Account',
+      phone: '+254700000003',
+      email: '',
+      creditLimitMinor: 2000000,
+      balanceMinor: 2350000,
+      isActive: true,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 6))),
+  CustomerAccount(
+      id: 'c4',
+      name: 'John Kiprono',
+      phone: '+254700000004',
+      email: '',
+      creditLimitMinor: 0,
+      balanceMinor: 0,
+      isActive: true,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 14))),
+  CustomerAccount(
+      id: 'c5',
+      name: 'Grace Wanjiku',
+      phone: '+254712345678',
+      email: 'grace.w@example.com',
+      creditLimitMinor: 1000000,
+      balanceMinor: 0,
+      isActive: true,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 4))),
+  CustomerAccount(
+      id: 'c6',
+      name: 'Eldoret Day Care Centre',
+      phone: '+254722334455',
+      email: '',
+      creditLimitMinor: 1500000,
+      balanceMinor: 480000,
+      isActive: true,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 9))),
+  CustomerAccount(
+      id: 'c7',
+      name: 'Peter Otieno',
+      phone: '+254733445566',
+      email: '',
+      creditLimitMinor: 300000,
+      balanceMinor: 0,
+      isActive: false,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 210))),
+  CustomerAccount(
+      id: 'c8',
+      name: 'Faith Jepchirchir',
+      phone: '+254744556677',
+      email: 'faith.j@example.com',
+      creditLimitMinor: 800000,
+      balanceMinor: 800000,
+      isActive: true,
+      lastPurchaseOn: _testToday.subtract(const Duration(days: 11))),
 ];
 
 void main() {
@@ -54,7 +119,8 @@ void main() {
       isActive: true,
     );
 
-    test('available credit is the limit minus what is owed, never negative', () {
+    test('available credit is the limit minus what is owed, never negative',
+        () {
       expect(account.availableCreditMinor, 600);
       expect(account.copyWith(balanceMinor: 1000).availableCreditMinor, 0);
       expect(account.copyWith(balanceMinor: 1500).availableCreditMinor, 0);
@@ -71,7 +137,8 @@ void main() {
     late SaveCustomerAccount useCase;
 
     setUp(() {
-      useCase = SaveCustomerAccount(DemoCustomerAccountRepository(customers: _testCustomers));
+      useCase = SaveCustomerAccount(
+          DemoCustomerAccountRepository(customers: _testCustomers));
     });
 
     Future<String?> failureOf(CustomerDraft d, {String? id}) async {
@@ -91,10 +158,14 @@ void main() {
       expect((result as Ok<CustomerAccount>).value.phone, '+254755000111');
     });
 
-    test('rejects a missing name, a bad phone, a bad email and a negative limit', () async {
+    test(
+        'rejects a missing name, a bad phone, a bad email and a negative limit',
+        () async {
       expect(await failureOf(draft(name: '  ')), CustomerMessages.nameMissing);
-      expect(await failureOf(draft(phone: '12345')), CustomerMessages.phoneInvalid);
-      expect(await failureOf(draft(email: 'not-an-email')), CustomerMessages.emailInvalid);
+      expect(await failureOf(draft(phone: '12345')),
+          CustomerMessages.phoneInvalid);
+      expect(await failureOf(draft(email: 'not-an-email')),
+          CustomerMessages.emailInvalid);
       expect(await failureOf(draft(limit: -1)), CustomerMessages.limitInvalid);
     });
 
@@ -102,10 +173,17 @@ void main() {
       expect(await failureOf(draft(email: '')), isNull);
     });
 
-    test('rejects a phone already in use, even when typed with spaces, but allows re-saving the same customer', () async {
-      expect(await failureOf(draft(phone: '+254700000001')), CustomerMessages.duplicatePhone);
-      expect(await failureOf(draft(phone: '+254 700 000 001')), CustomerMessages.duplicatePhone);
-      expect(await failureOf(draft(name: 'Mary Chebet', phone: '+254700000001'), id: 'c1'), isNull);
+    test(
+        'rejects a phone already in use, even when typed with spaces, but allows re-saving the same customer',
+        () async {
+      expect(await failureOf(draft(phone: '+254700000001')),
+          CustomerMessages.duplicatePhone);
+      expect(await failureOf(draft(phone: '+254 700 000 001')),
+          CustomerMessages.duplicatePhone);
+      expect(
+          await failureOf(draft(name: 'Mary Chebet', phone: '+254700000001'),
+              id: 'c1'),
+          isNull);
     });
   });
 
@@ -113,7 +191,8 @@ void main() {
     late ReceiveAccountPayment useCase;
 
     setUp(() {
-      useCase = ReceiveAccountPayment(DemoCustomerAccountRepository(customers: _testCustomers));
+      useCase = ReceiveAccountPayment(
+          DemoCustomerAccountRepository(customers: _testCustomers));
     });
 
     Future<String?> failureOf(AccountPaymentDraft d) async {
@@ -123,21 +202,24 @@ void main() {
 
     test('reduces the balance by the amount received', () async {
       final result = await useCase(
-        const AccountPaymentDraft(customerId: 'c1', amountMinor: 50000, method: PaymentMethod.cash),
+        const AccountPaymentDraft(
+            customerId: 'c1', amountMinor: 50000, method: PaymentMethod.cash),
       );
       expect((result as Ok<CustomerAccount>).value.balanceMinor, 70000);
     });
 
     test('rejects a zero amount', () async {
       expect(
-        await failureOf(const AccountPaymentDraft(customerId: 'c1', amountMinor: 0, method: PaymentMethod.cash)),
+        await failureOf(const AccountPaymentDraft(
+            customerId: 'c1', amountMinor: 0, method: PaymentMethod.cash)),
         CustomerMessages.paymentAmountInvalid,
       );
     });
 
     test('mobile and card payments need a reference code', () async {
       expect(
-        await failureOf(const AccountPaymentDraft(customerId: 'c1', amountMinor: 1000, method: PaymentMethod.mobile)),
+        await failureOf(const AccountPaymentDraft(
+            customerId: 'c1', amountMinor: 1000, method: PaymentMethod.mobile)),
         isNotNull,
       );
       expect(
@@ -151,13 +233,16 @@ void main() {
       );
     });
 
-    test('rejects more than the customer owes, and a customer who owes nothing', () async {
+    test('rejects more than the customer owes, and a customer who owes nothing',
+        () async {
       expect(
-        await failureOf(const AccountPaymentDraft(customerId: 'c1', amountMinor: 120001, method: PaymentMethod.cash)),
+        await failureOf(const AccountPaymentDraft(
+            customerId: 'c1', amountMinor: 120001, method: PaymentMethod.cash)),
         CustomerMessages.paymentExceedsBalance,
       );
       expect(
-        await failureOf(const AccountPaymentDraft(customerId: 'c4', amountMinor: 1000, method: PaymentMethod.cash)),
+        await failureOf(const AccountPaymentDraft(
+            customerId: 'c4', amountMinor: 1000, method: PaymentMethod.cash)),
         CustomerMessages.noBalance,
       );
     });
@@ -170,7 +255,8 @@ void main() {
       expect(cubit.state.activeCount, 7); // Peter Otieno is inactive
       expect(cubit.state.outstandingMinor, 7000000);
       expect(cubit.state.count(CustomerFilter.owing), 5);
-      expect(cubit.state.count(CustomerFilter.overLimit), 1); // Kapsabet SACCO; Faith is exactly at her limit
+      expect(cubit.state.count(CustomerFilter.overLimit),
+          1); // Kapsabet SACCO; Faith is exactly at her limit
       expect(cubit.state.count(CustomerFilter.inactive), 1);
       await cubit.close();
     });
@@ -179,7 +265,8 @@ void main() {
       final cubit = buildCubit();
       await cubit.load();
       cubit.setFilter(CustomerFilter.owing);
-      expect(cubit.state.visible.map((c) => c.id), ['c2', 'c3', 'c8', 'c6', 'c1']);
+      expect(
+          cubit.state.visible.map((c) => c.id), ['c2', 'c3', 'c8', 'c6', 'c1']);
       await cubit.close();
     });
 
@@ -195,44 +282,54 @@ void main() {
       await cubit.close();
     });
 
-    test('receiving a payment updates the balance, the totals and raises a notice', () async {
+    test(
+        'receiving a payment updates the balance, the totals and raises a notice',
+        () async {
       final cubit = buildCubit();
       await cubit.load();
       final error = await cubit.receivePayment(
-        const AccountPaymentDraft(customerId: 'c1', amountMinor: 120000, method: PaymentMethod.cash),
+        const AccountPaymentDraft(
+            customerId: 'c1', amountMinor: 120000, method: PaymentMethod.cash),
       );
       expect(error, isNull);
-      expect(cubit.state.accounts.firstWhere((c) => c.id == 'c1').balanceMinor, 0);
+      expect(
+          cubit.state.accounts.firstWhere((c) => c.id == 'c1').balanceMinor, 0);
       expect(cubit.state.outstandingMinor, 6880000);
       expect(cubit.state.count(CustomerFilter.owing), 4);
       expect(cubit.state.notice, isNotNull);
       await cubit.close();
     });
 
-    test('a rejected payment returns the message and changes nothing', () async {
+    test('a rejected payment returns the message and changes nothing',
+        () async {
       final cubit = buildCubit();
       await cubit.load();
       final error = await cubit.receivePayment(
-        const AccountPaymentDraft(customerId: 'c1', amountMinor: 999999, method: PaymentMethod.cash),
+        const AccountPaymentDraft(
+            customerId: 'c1', amountMinor: 999999, method: PaymentMethod.cash),
       );
       expect(error, CustomerMessages.paymentExceedsBalance);
       expect(cubit.state.outstandingMinor, 7000000);
       await cubit.close();
     });
 
-    test('saving a new customer adds it; a duplicate phone returns the message', () async {
+    test('saving a new customer adds it; a duplicate phone returns the message',
+        () async {
       final cubit = buildCubit();
       await cubit.load();
-      expect(await cubit.save(draft(name: 'Zed New', phone: '+254766000222')), isNull);
+      expect(await cubit.save(draft(name: 'Zed New', phone: '+254766000222')),
+          isNull);
       expect(cubit.state.accounts.length, 9);
-      expect(await cubit.save(draft(phone: '+254700000002')), CustomerMessages.duplicatePhone);
+      expect(await cubit.save(draft(phone: '+254700000002')),
+          CustomerMessages.duplicatePhone);
       await cubit.close();
     });
 
     test('deactivating a customer moves them to the Inactive filter', () async {
       final cubit = buildCubit();
       await cubit.load();
-      await cubit.toggleActive(cubit.state.accounts.firstWhere((c) => c.id == 'c5'));
+      await cubit
+          .toggleActive(cubit.state.accounts.firstWhere((c) => c.id == 'c5'));
       expect(cubit.state.count(CustomerFilter.inactive), 2);
       expect(cubit.state.activeCount, 6);
       await cubit.close();

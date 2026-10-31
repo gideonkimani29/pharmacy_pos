@@ -35,7 +35,10 @@ void main() {
     );
   }
 
-  PurchaseRequest request({String? supplierId = 's1', String invoice = 'INV-1', List<PurchaseLine>? lines}) {
+  PurchaseRequest request(
+      {String? supplierId = 's1',
+      String invoice = 'INV-1',
+      List<PurchaseLine>? lines}) {
     return PurchaseRequest(
       idempotencyKey: 'k',
       supplierId: supplierId,
@@ -64,33 +67,45 @@ void main() {
     });
 
     test('needs a supplier', () async {
-      expect(await failureOf(request(supplierId: null)), PurchaseMessages.noSupplier);
+      expect(await failureOf(request(supplierId: null)),
+          PurchaseMessages.noSupplier);
     });
 
     test('needs an invoice number', () async {
-      expect(await failureOf(request(invoice: '  ')), PurchaseMessages.noInvoice);
+      expect(
+          await failureOf(request(invoice: '  ')), PurchaseMessages.noInvoice);
     });
 
     test('needs at least one line', () async {
-      expect(await failureOf(request(lines: const [])), PurchaseMessages.noLines);
+      expect(
+          await failureOf(request(lines: const [])), PurchaseMessages.noLines);
     });
 
     test('rejects an expiry on or before the received date', () async {
-      expect(await failureOf(request(lines: [line(expiry: received)])), PurchaseMessages.expiryPast);
+      expect(await failureOf(request(lines: [line(expiry: received)])),
+          PurchaseMessages.expiryPast);
     });
 
     test('rejects a missing batch, zero cost and zero quantity', () async {
-      expect(await failureOf(request(lines: [line(batch: ' ')])), PurchaseMessages.batchMissing);
-      expect(await failureOf(request(lines: [line(cost: 0)])), PurchaseMessages.costInvalid);
-      expect(await failureOf(request(lines: [line(quantity: 0)])), PurchaseMessages.quantityInvalid);
+      expect(await failureOf(request(lines: [line(batch: ' ')])),
+          PurchaseMessages.batchMissing);
+      expect(await failureOf(request(lines: [line(cost: 0)])),
+          PurchaseMessages.costInvalid);
+      expect(await failureOf(request(lines: [line(quantity: 0)])),
+          PurchaseMessages.quantityInvalid);
     });
 
-    test('rejects the same batch twice for one product but allows it across products', () async {
+    test(
+        'rejects the same batch twice for one product but allows it across products',
+        () async {
       expect(
         await failureOf(request(lines: [line(batch: 'b1'), line(batch: 'B1')])),
         PurchaseMessages.duplicateBatch,
       );
-      expect(await failureOf(request(lines: [line(product: 'p1'), line(product: 'p2')])), isNull);
+      expect(
+          await failureOf(
+              request(lines: [line(product: 'p1'), line(product: 'p2')])),
+          isNull);
     });
   });
 
@@ -108,9 +123,12 @@ void main() {
     );
 
     PurchaseFormCubit build() => PurchaseFormCubit(
-          getSuppliers: GetSuppliers(DemoSupplierRepository(suppliers: const [testSupplier])),
-          searchProducts: SearchProducts(DemoProductRepository(products: const [product])),
-          recordPurchase: RecordPurchase(DemoPurchaseRepository(suppliers: const [testSupplier])),
+          getSuppliers: GetSuppliers(
+              DemoSupplierRepository(suppliers: const [testSupplier])),
+          searchProducts:
+              SearchProducts(DemoProductRepository(products: const [product])),
+          recordPurchase: RecordPurchase(
+              DemoPurchaseRepository(suppliers: const [testSupplier])),
           clock: () => received,
         );
 
@@ -133,7 +151,8 @@ void main() {
     test('totals follow quantity and unit cost', () {
       final cubit = build()..addProduct(product);
       final id = cubit.state.lines.single.id;
-      cubit.updateLine(id, (l) => l.copyWith(quantity: 5, unitCostMinor: 12000));
+      cubit.updateLine(
+          id, (l) => l.copyWith(quantity: 5, unitCostMinor: 12000));
       expect(cubit.state.totalMinor, 60000);
       expect(cubit.state.unitCount, 5);
       cubit.removeLine(id);

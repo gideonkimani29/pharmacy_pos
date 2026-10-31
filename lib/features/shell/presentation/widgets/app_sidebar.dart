@@ -26,11 +26,13 @@ class AppSidebar extends StatelessWidget {
     required this.selected,
     required this.onSelected,
     required this.compact,
+    required this.onLogout,
   });
 
   final AppModule selected;
   final ValueChanged<AppModule> onSelected;
   final bool compact;
+  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +55,17 @@ class AppSidebar extends StatelessWidget {
                     selected: module == selected,
                     compact: compact,
                     onTap: () => onSelected(module),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(AppDimens.spaceMd),
+                    child: Tooltip(
+                      message: compact ? 'Sign out' : '',
+                      child: TextButton.icon(
+                        onPressed: onLogout,
+                        icon: const Icon(Icons.logout),
+                        label: compact ? const SizedBox.shrink() : const Text('Sign out'),
+                      ),
+                    ),
                   ),
               ],
             ),

@@ -14,7 +14,9 @@ import '../../../stock/presentation/pages/stock_page.dart';
 import '../widgets/app_sidebar.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, required this.onLogout});
+
+  final Future<void> Function(BuildContext context) onLogout;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -34,6 +36,7 @@ class _AppShellState extends State<AppShell> {
               AppSidebar(
                 selected: _selected,
                 compact: compact,
+                onLogout: () => widget.onLogout(context),
                 onSelected: (module) => setState(() => _selected = module),
               ),
               Expanded(child: _body()),

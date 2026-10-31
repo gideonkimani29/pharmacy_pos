@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/constants/app_config.dart';
 import 'payment.dart';
 import 'sale_type.dart';
 
@@ -33,6 +34,7 @@ class SaleRequest extends Equatable {
     required this.prescriptionVerified,
     required this.discountMinor,
     required this.expectedTotalMinor,
+    this.taxRateBasisPoints = AppConfig.taxRateBasisPoints,
     this.customerId,
   });
 
@@ -45,6 +47,7 @@ class SaleRequest extends Equatable {
   final List<PaymentLine> payments;
   final bool prescriptionVerified;
   final int discountMinor;
+  final int taxRateBasisPoints;
 
   /// Total the cashier saw. The backend rejects the sale if prices drifted.
   final int expectedTotalMinor;
@@ -61,6 +64,7 @@ class SaleRequest extends Equatable {
         prescriptionVerified,
         discountMinor,
         expectedTotalMinor,
+        taxRateBasisPoints,
       ];
 }
 

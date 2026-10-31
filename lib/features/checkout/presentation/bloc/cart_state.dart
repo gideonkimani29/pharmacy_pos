@@ -21,18 +21,24 @@ class CartState extends Equatable {
     required this.idempotencyKey,
     required this.saleType,
     required this.discountMinor,
+    required this.taxRateBasisPoints,
     this.customer,
     this.receipt,
     this.notice,
   });
 
-  factory CartState.initial(String idempotencyKey) => CartState(
+  factory CartState.initial(
+    String idempotencyKey, {
+    int taxRateBasisPoints = AppConfig.taxRateBasisPoints,
+  }) =>
+      CartState(
         items: const [],
         status: CartStatus.editing,
         prescriptionVerified: false,
         idempotencyKey: idempotencyKey,
         saleType: SaleType.cash,
         discountMinor: 0,
+        taxRateBasisPoints: taxRateBasisPoints,
       );
 
   final List<CartItem> items;
@@ -41,6 +47,7 @@ class CartState extends Equatable {
   final String idempotencyKey;
   final SaleType saleType;
   final int discountMinor;
+  final int taxRateBasisPoints;
   final Customer? customer;
   final SaleReceipt? receipt;
   final CartNotice? notice;
@@ -49,7 +56,11 @@ class CartState extends Equatable {
   bool get isSubmitting => status == CartStatus.submitting;
   int get unitCount => items.fold(0, (sum, item) => sum + item.quantity);
   int get subtotalMinor => items.fold(0, (sum, item) => sum + item.lineTotalMinor);
-  OrderTotals get totals => OrderTotals.fromSubtotal(subtotalMinor, discountMinor: discountMinor);
+  OrderTotals get totals => OrderTotals.fromSubtotal(
+        subtotalMinor,
+        discountMinor: discountMinor,
+        taxRateBasisPoints: taxRateBasisPoints,
+      );
   bool get requiresPrescriptionCheck => items.any((item) => item.product.requiresPrescription);
 
   bool get canCheckout =>
@@ -65,6 +76,7 @@ class CartState extends Equatable {
     String? idempotencyKey,
     SaleType? saleType,
     int? discountMinor,
+    int? taxRateBasisPoints,
     Customer? customer,
     bool clearCustomer = false,
     SaleReceipt? receipt,
@@ -77,6 +89,7 @@ class CartState extends Equatable {
       idempotencyKey: idempotencyKey ?? this.idempotencyKey,
       saleType: saleType ?? this.saleType,
       discountMinor: discountMinor ?? this.discountMinor,
+      taxRateBasisPoints: taxRateBasisPoints ?? this.taxRateBasisPoints,
       customer: clearCustomer ? null : (customer ?? this.customer),
       receipt: receipt ?? this.receipt,
       notice: notice ?? this.notice,
@@ -91,6 +104,7 @@ class CartState extends Equatable {
         idempotencyKey,
         saleType,
         discountMinor,
+        taxRateBasisPoints,
         customer,
         receipt,
         notice,

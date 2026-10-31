@@ -151,6 +151,15 @@ class ApiSession extends ChangeNotifier {
     _notify();
   }
 
+  Future<void> acceptInvitation({required String token, required String password}) async {
+    await _send(
+      'POST',
+      'auth/accept-invitation',
+      body: {'token': token.trim(), 'password': password},
+      authenticated: false,
+    );
+  }
+
   Future<void> logout() async {
     final refreshToken = _refreshToken;
     try {

@@ -99,3 +99,12 @@ final class CartDiscountChanged extends CartEvent {
   @override
   List<Object?> get props => [discountMinor];
 }
+
+final class CartTaxRateChanged extends CartEvent {
+  const CartTaxRateChanged(this.taxRateBasisPoints);
+
+  final int taxRateBasisPoints;
+
+  @override
+  List<Object?> get props => [taxRateBasisPoints];
+}

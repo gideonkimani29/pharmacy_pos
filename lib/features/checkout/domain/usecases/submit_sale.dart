@@ -42,6 +42,7 @@ class SubmitSale {
     final total = OrderTotals.fromSubtotal(
       request.subtotalMinor,
       discountMinor: request.discountMinor,
+      taxRateBasisPoints: request.taxRateBasisPoints,
     ).totalMinor;
     final tendered = request.payments.fold(0, (sum, p) => sum + p.amountMinor);
     final nonCash = request.payments

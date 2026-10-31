@@ -18,13 +18,19 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _invitationToken = TextEditingController();
+  final _confirmPassword = TextEditingController();
   bool _submitting = false;
+  bool _acceptingInvitation = false;
   String? _error;
+  String? _message;
 
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _invitationToken.dispose();
+    _confirmPassword.dispose();
     super.dispose();
   }
 
@@ -33,9 +39,23 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _submitting = true;
       _error = null;
+      _message = null;
     });
     try {
-      await widget.session.login(email: _email.text, password: _password.text);
+      if (_acceptingInvitation) {
+        await widget.session.acceptInvitation(token: _invitationToken.text, password: _password.text);
+        if (mounted) {
+          setState(() {
+            _acceptingInvitation = false;
+            _password.clear();
+            _confirmPassword.clear();
+            _invitationToken.clear();
+            _message = 'Password set. You can now sign in.';
+          });
+        }
+      } else {
+        await widget.session.login(email: _email.text, password: _password.text);
+      }
     } on ApiException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } on http.ClientException {
@@ -71,32 +91,59 @@ class _LoginPageState extends State<LoginPage> {
                     Icon(Icons.local_pharmacy, size: 44, color: theme.colorScheme.primary),
                     const SizedBox(height: 12),
                     Text(
-                      'Sign in to Pharmacy POS',
+                      _acceptingInvitation ? 'Set your password' : 'Sign in to Pharmacy POS',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _email,
-                      autofocus: true,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.username],
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      validator: (value) => value == null || !value.contains('@') ? 'Enter a valid email.' : null,
-                      onFieldSubmitted: (_) => _signIn(),
-                    ),
+                    if (_acceptingInvitation)
+                      TextFormField(
+                        controller: _invitationToken,
+                        autofocus: true,
+                        decoration: const InputDecoration(labelText: 'One-time invitation token'),
+                        validator: (value) => value == null || value.trim().isEmpty ? 'Enter your invitation token.' : null,
+                      )
+                    else
+                      TextFormField(
+                        controller: _email,
+                        autofocus: true,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.username],
+                        decoration: const InputDecoration(labelText: 'Email'),
+                        validator: (value) => value == null || !value.contains('@') ? 'Enter a valid email.' : null,
+                        onFieldSubmitted: (_) => _signIn(),
+                      ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _password,
                       obscureText: true,
                       autofillHints: const [AutofillHints.password],
                       decoration: const InputDecoration(labelText: 'Password'),
-                      validator: (value) => value == null || value.isEmpty ? 'Enter your password.' : null,
+                      validator: (value) => value == null ||
+                              (_acceptingInvitation ? value.length < 12 : value.isEmpty)
+                          ? _acceptingInvitation
+                              ? 'Use at least 12 characters.'
+                              : 'Enter your password.'
+                          : null,
                       onFieldSubmitted: (_) => _signIn(),
                     ),
+                    if (_acceptingInvitation) ...[
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _confirmPassword,
+                        obscureText: true,
+                        decoration: const InputDecoration(labelText: 'Confirm password'),
+                        validator: (value) => value != _password.text ? 'Passwords do not match.' : null,
+                        onFieldSubmitted: (_) => _signIn(),
+                      ),
+                    ],
                     if (_error != null) ...[
                       const SizedBox(height: 12),
                       Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+                    ],
+                    if (_message != null) ...[
+                      const SizedBox(height: 12),
+                      Text(_message!, style: TextStyle(color: theme.colorScheme.primary)),
                     ],
                     const SizedBox(height: 20),
                     FilledButton(
@@ -106,7 +153,18 @@ class _LoginPageState extends State<LoginPage> {
                               dimension: 18,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Text('Sign in'),
+                          : Text(_acceptingInvitation ? 'Set password' : 'Sign in'),
+                    ),
+                    TextButton(
+                      onPressed: _submitting
+                          ? null
+                          : () => setState(() {
+                                _acceptingInvitation = !_acceptingInvitation;
+                                _error = null;
+                                _message = null;
+                                _formKey.currentState?.reset();
+                              }),
+                      child: Text(_acceptingInvitation ? 'Back to sign in' : 'Have an invitation token?'),
                     ),
                   ],
                 ),

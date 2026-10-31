@@ -19,10 +19,14 @@ part 'cart_event.dart';
 part 'cart_state.dart';
 
 class CartBloc extends Bloc<CartEvent, CartState> {
-  CartBloc({required SubmitSale submitSale, DateTime Function()? clock})
+  CartBloc({
+    required SubmitSale submitSale,
+    DateTime Function()? clock,
+    int taxRateBasisPoints = AppConfig.taxRateBasisPoints,
+  })
       : _submitSale = submitSale,
         _clock = clock ?? DateTime.now,
-        super(CartState.initial(_newKey())) {
+        super(CartState.initial(_newKey(), taxRateBasisPoints: taxRateBasisPoints)) {
     on<CartProductAdded>(_onProductAdded);
     on<CartQuantityChanged>(_onQuantityChanged);
     on<CartItemRemoved>(_onItemRemoved);
@@ -31,6 +35,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<CartCustomerSelected>(_onCustomerSelected);
     on<CartSaleTypeChanged>(_onSaleTypeChanged);
     on<CartDiscountChanged>(_onDiscountChanged);
+    on<CartTaxRateChanged>(_onTaxRateChanged);
     on<CartCheckoutSubmitted>(_onCheckoutSubmitted);
     on<CartSaleAcknowledged>(_onSaleAcknowledged);
     on<CartNoticeRaised>((event, emit) => _notify(emit, event.message));
@@ -117,7 +122,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
   void _onCleared(CartCleared event, Emitter<CartState> emit) {
     if (state.isSubmitting) return;
-    emit(CartState.initial(_newKey()));
+    emit(CartState.initial(_newKey(), taxRateBasisPoints: state.taxRateBasisPoints));
   }
 
   void _onPrescriptionToggled(CartPrescriptionToggled event, Emitter<CartState> emit) {
@@ -145,6 +150,11 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       _notify(emit, AppStrings.errorInvalidDiscount);
       return;
     }
+
+    void _onTaxRateChanged(CartTaxRateChanged event, Emitter<CartState> emit) {
+      if (state.isSubmitting || state.taxRateBasisPoints == event.taxRateBasisPoints) return;
+      emit(state.copyWith(taxRateBasisPoints: event.taxRateBasisPoints, idempotencyKey: _newKey()));
+    }
     emit(state.copyWith(discountMinor: event.discountMinor, idempotencyKey: _newKey()));
   }
 
@@ -169,6 +179,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       payments: event.payments,
       prescriptionVerified: state.prescriptionVerified,
       discountMinor: state.discountMinor,
+      taxRateBasisPoints: state.taxRateBasisPoints,
       expectedTotalMinor: state.totals.totalMinor,
     );
 
@@ -183,6 +194,6 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   void _onSaleAcknowledged(CartSaleAcknowledged event, Emitter<CartState> emit) {
-    emit(CartState.initial(_newKey()));
+    emit(CartState.initial(_newKey(), taxRateBasisPoints: state.taxRateBasisPoints));
   }
 }

@@ -10,13 +10,17 @@ class OrderTotals extends Equatable {
   });
 
   /// Discount is clamped to [0, subtotal]; tax applies to the discounted amount.
-  factory OrderTotals.fromSubtotal(int subtotalMinor, {int discountMinor = 0}) {
+  factory OrderTotals.fromSubtotal(
+    int subtotalMinor, {
+    int discountMinor = 0,
+    int taxRateBasisPoints = AppConfig.taxRateBasisPoints,
+  }) {
     final discount = discountMinor < 0
         ? 0
         : (discountMinor > subtotalMinor ? subtotalMinor : discountMinor);
     const half = AppConfig.basisPointsDenominator ~/ 2;
     final taxable = subtotalMinor - discount;
-    final tax = (taxable * AppConfig.taxRateBasisPoints + half) ~/ AppConfig.basisPointsDenominator;
+    final tax = (taxable * taxRateBasisPoints + half) ~/ AppConfig.basisPointsDenominator;
     return OrderTotals(subtotalMinor: subtotalMinor, discountMinor: discount, taxMinor: tax);
   }
 

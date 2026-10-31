@@ -69,6 +69,7 @@ class PharmacyPosApp extends StatefulWidget {
 class _PharmacyPosAppState extends State<PharmacyPosApp> {
   late final ApiSession _session;
   late final bool _ownsSession;
+  Future<int>? _taxRateFuture;
 
   @override
   void initState() {
@@ -105,14 +106,45 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
           if (_session.restoreError case final error?) {
             return _ConnectionError(error: error.message, onRetry: _session.restore);
           }
-          if (!_session.isAuthenticated) return LoginPage(session: _session);
-          return _authenticatedHome();
+          if (!_session.isAuthenticated) {
+            _taxRateFuture = null;
+            return LoginPage(session: _session);
+          }
+          _taxRateFuture ??= _loadTaxRate();
+          return FutureBuilder<int>(
+            future: _taxRateFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return _ConnectionError(
+                  error: 'Could not load pharmacy settings: ${snapshot.error}',
+                  onRetry: _retryTaxRate,
+                );
+              }
+              if (!snapshot.hasData) {
+                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              }
+              return _authenticatedHome(snapshot.data!);
+            },
+          );
         },
       ),
     );
   }
 
-  Widget _authenticatedHome() {
+  Future<int> _loadTaxRate() async {
+    final settings = apiObject(await _session.get('settings'));
+    final taxRate = settings['taxRateBasisPoints'];
+    if (taxRate is! int || taxRate < 0 || taxRate > AppConfig.basisPointsDenominator) {
+      throw const FormatException('The API returned an invalid pharmacy tax rate.');
+    }
+    return taxRate;
+  }
+
+  Future<void> _retryTaxRate() async {
+    setState(() => _taxRateFuture = _loadTaxRate());
+  }
+
+  Widget _authenticatedHome(int taxRateBasisPoints) {
     return RepositoryProvider<ApiSession>.value(
       value: _session,
       child: MultiRepositoryProvider(
@@ -139,7 +171,10 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
               ),
             ),
             BlocProvider<CartBloc>(
-              create: (context) => CartBloc(submitSale: SubmitSale(context.read<SaleRepository>())),
+              create: (context) => CartBloc(
+                submitSale: SubmitSale(context.read<SaleRepository>()),
+                taxRateBasisPoints: taxRateBasisPoints,
+              ),
             ),
             BlocProvider<CustomersCubit>(
               create: (context) =>
@@ -208,7 +243,15 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
               },
             ),
           ],
-          child: AppShell(onLogout: _logout),
+          child: BlocListener<SettingsCubit, SettingsState>(
+            listenWhen: (previous, current) =>
+                previous.saved?.taxRateBasisPoints != current.saved?.taxRateBasisPoints,
+            listener: (context, state) {
+              final rate = state.saved?.taxRateBasisPoints;
+              if (rate != null) context.read<CartBloc>().add(CartTaxRateChanged(rate));
+            },
+            child: AppShell(onLogout: _logout),
+          ),
         ),
       ),
     );

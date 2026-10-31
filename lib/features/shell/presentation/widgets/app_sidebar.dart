@@ -92,11 +92,14 @@ class _Brand extends StatelessWidget {
           const Icon(Icons.local_pharmacy, color: AppColors.primary),
           if (!compact) ...[
             const SizedBox(width: AppDimens.spaceMd),
-            Text(
-              AppStrings.appTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: AppColors.primaryDark,
-                fontWeight: FontWeight.w800,
+            Flexible(
+              child: Text(
+                AppStrings.appTitle,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: AppColors.primaryDark,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],

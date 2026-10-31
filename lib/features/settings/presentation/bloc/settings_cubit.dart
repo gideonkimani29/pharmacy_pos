@@ -185,13 +185,14 @@ class SettingsCubit extends Cubit<SettingsState> {
   }
 
   /// Returns null on success, or the message to show in the dialog.
-  Future<String?> saveUser(UserDraft draft, {String? id}) async {
+  Future<String?> saveUser(UserDraft draft, {String? id, void Function(String token)? onInvitation}) async {
     final result = await _saveUser(draft, id: id);
     switch (result) {
       case Ok<AppUser>(:final value):
         final others = state.users.where((u) => u.id != value.id);
         emit(state.copyWith(users: _sorted([...others, value])));
         _notify(SettingsStrings.userSaved(value.name));
+        if (value.invitationToken case final token?) onInvitation?.call(token);
         return null;
       case Err<AppUser>(:final failure):
         return failure.message;

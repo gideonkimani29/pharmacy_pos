@@ -13,6 +13,7 @@ class AppUser extends Equatable {
     required this.role,
     required this.isActive,
     this.lastSignInAt,
+    this.invitationToken,
   });
 
   final String id;
@@ -25,7 +26,10 @@ class AppUser extends Equatable {
   final bool isActive;
   final DateTime? lastSignInAt;
 
-  AppUser copyWith({bool? isActive}) {
+  /// One-time token returned when the API creates an invited user.
+  final String? invitationToken;
+
+  AppUser copyWith({bool? isActive, String? invitationToken}) {
     return AppUser(
       id: id,
       name: name,
@@ -34,11 +38,12 @@ class AppUser extends Equatable {
       role: role,
       isActive: isActive ?? this.isActive,
       lastSignInAt: lastSignInAt,
+      invitationToken: invitationToken ?? this.invitationToken,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, email, phone, role, isActive, lastSignInAt];
+  List<Object?> get props => [id, name, email, phone, role, isActive, lastSignInAt, invitationToken];
 }
 
 class UserDraft extends Equatable {

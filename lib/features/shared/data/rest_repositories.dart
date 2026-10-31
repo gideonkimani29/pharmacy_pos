@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../core/network/api_repository.dart';
 import '../../../core/network/api_session.dart';

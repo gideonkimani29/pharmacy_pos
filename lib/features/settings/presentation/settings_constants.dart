@@ -79,7 +79,7 @@ abstract final class SettingsStrings {
   static const String fieldUserPhone = 'Phone (optional)';
   static const String fieldUserRole = 'Role';
   static const String inviteNote =
-      'A new user gets an email to set their own password. Passwords are never entered or stored in this app.';
+      'The API returns a one-time invitation token. Copy it and deliver it to the new user through a secure channel so they can set their password.';
   static const String rolesTitle = 'What each role can do';
   static const String noUsers = 'No users yet.';
   static String userSaved(String name) => '$name saved.';

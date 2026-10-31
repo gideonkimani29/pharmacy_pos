@@ -1,6 +1,6 @@
 # Go Backend Integration Instructions
 
-This repository now includes a Go REST API in `backend\`. The Flutter app still uses in-memory `Demo*Repository` classes; implementing Flutter's HTTP repositories and switching the composition root is a separate remaining integration step. API paths below describe the current service.
+This repository now includes a Go REST API in `backend\`. The Flutter app still uses in-memory `Demo*Repository` classes; implementing Flutter's HTTP repositories and switching the composition root is a separate remaining integration step. API paths below describe the current service. SQLite schema is created idempotently at startup; back up the DB file before deployments and upgrades.
 
 ## 1. Agree on the API contract
 
@@ -32,17 +32,21 @@ Set-Location .\backend
 $secretBytes = New-Object byte[] 48
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($secretBytes)
 $env:JWT_SECRET = [Convert]::ToBase64String($secretBytes)
+$bootstrapBytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bootstrapBytes)
+$env:BOOTSTRAP_TOKEN = [Convert]::ToBase64String($bootstrapBytes)
 $env:DATABASE_PATH = "..\data\pharmacy.db"
 $env:CORS_ORIGINS = "http://localhost:5000,http://localhost:3000"
 go run .\cmd\pharmacy-api
 ```
 
-The service listens on `:8080` by default, creates the SQLite directory/database, applies schema migrations at startup, and exposes `GET /health`. Keep the `JWT_SECRET` stable across restarts and private; use a secret manager for deployment. The default database path is `backend\data\pharmacy.db`.
+The service listens on `:8080` by default, creates the SQLite directory/database, applies schema setup at startup, and exposes `GET /health`. Keep `JWT_SECRET` stable across restarts and private; keep `BOOTSTRAP_TOKEN` private and remove it from the environment after creating the first admin. Use a secret manager for deployment. Both secrets must be at least 32 characters. The default database path is `backend\data\pharmacy.db`.
 
 Create the first administrator once:
 
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8080/api/v1/auth/bootstrap `
+  -Headers @{ "X-Bootstrap-Token" = $env:BOOTSTRAP_TOKEN } `
   -ContentType "application/json" `
   -Body '{"name":"Pharmacy Admin","email":"admin@example.com","phone":"","password":"replace-with-a-long-unique-password"}'
 ```

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"crypto/subtle"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -18,6 +19,19 @@ type tokenResponse struct {
 }
 
 func (s *Server) bootstrap(w http.ResponseWriter, r *http.Request) {
+	var existingUsers int
+	if err := s.db.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users`).Scan(&existingUsers); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not check bootstrap status.", nil)
+		return
+	}
+	if existingUsers > 0 {
+		writeError(w, http.StatusConflict, "bootstrap_complete", "An administrator already exists.", nil)
+		return
+	}
+	if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-Bootstrap-Token")), []byte(s.cfg.BootstrapToken)) != 1 {
+		writeError(w, http.StatusForbidden, "invalid_bootstrap_token", "A valid bootstrap token is required.", nil)
+		return
+	}
 	var request struct {
 		Name     string `json:"name"`
 		Email    string `json:"email"`

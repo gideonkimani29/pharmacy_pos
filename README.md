@@ -44,10 +44,14 @@ Set-Location .\backend
 $secretBytes = New-Object byte[] 48
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($secretBytes)
 $env:JWT_SECRET = [Convert]::ToBase64String($secretBytes)
+$bootstrapBytes = New-Object byte[] 32
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bootstrapBytes)
+$env:BOOTSTRAP_TOKEN = [Convert]::ToBase64String($bootstrapBytes)
 go run .\cmd\pharmacy-api
 ```
 
-Then create the first admin with `POST http://127.0.0.1:8080/api/v1/auth/bootstrap`. Full API routes,
+Then create the first admin with `POST http://127.0.0.1:8080/api/v1/auth/bootstrap`, providing
+`X-Bootstrap-Token: $env:BOOTSTRAP_TOKEN`. Full API routes,
 authentication, database configuration, and Flutter host/emulator URLs are documented in
 [`instruction.md`](instruction.md). The Flutter UI is not yet wired to these endpoints and still uses
 demo repositories.

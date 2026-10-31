@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+	"strings"
 
 	_ "modernc.org/sqlite"
 
@@ -27,8 +28,9 @@ func testServer(t *testing.T) (*sql.DB, *httptest.Server) {
 		t.Fatal(err)
 	}
 	handler := New(db, config.Config{
-		JWTSecret:   []byte("test-secret-with-more-than-thirty-two-characters"),
-		CORSOrigins: map[string]struct{}{"http://localhost:3000": {}},
+		JWTSecret:     []byte("test-secret-with-more-than-thirty-two-characters"),
+		BootstrapToken: "test-bootstrap-token-with-more-than-thirty-two",
+		CORSOrigins:   map[string]struct{}{"http://localhost:3000": {}},
 	})
 	server := httptest.NewServer(handler)
 	t.Cleanup(func() {
@@ -60,6 +62,9 @@ func request(t *testing.T, client *http.Client, method, url, token string, body 
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
+	if strings.HasSuffix(url, "/api/v1/auth/bootstrap") {
+		req.Header.Set("X-Bootstrap-Token", "test-bootstrap-token-with-more-than-thirty-two")
+	}
 	response, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -80,6 +85,23 @@ func decodeResponse[T any](t *testing.T, response *http.Response) T {
 func TestBootstrapLoginAndRefreshRotation(t *testing.T) {
 	_, server := testServer(t)
 	client := server.Client()
+
+	unprotectedBootstrap, err := http.NewRequest(http.MethodPost, server.URL+"/api/v1/auth/bootstrap",
+		bytes.NewReader(mustJSON(t, map[string]string{
+			"name": "Attacker", "email": "attacker@example.test", "password": "a-very-secure-password",
+		})))
+	if err != nil {
+		t.Fatal(err)
+	}
+	unprotectedBootstrap.Header.Set("Content-Type", "application/json")
+	unprotectedResponse, err := client.Do(unprotectedBootstrap)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = unprotectedResponse.Body.Close()
+	if unprotectedResponse.StatusCode != http.StatusForbidden {
+		t.Fatalf("bootstrap without secret status = %d, want 403", unprotectedResponse.StatusCode)
+	}
 
 	protected := request(t, client, http.MethodGet, server.URL+"/api/v1/medicines", "", nil)
 	if protected.StatusCode != http.StatusUnauthorized {

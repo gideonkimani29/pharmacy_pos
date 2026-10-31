@@ -37,14 +37,15 @@ CREATE TABLE IF NOT EXISTS medicines (
   name TEXT NOT NULL,
   generic_name TEXT NOT NULL DEFAULT '',
   dosage_form TEXT NOT NULL,
-  sku TEXT NOT NULL UNIQUE,
-  barcode TEXT NOT NULL DEFAULT '',
+  sku TEXT NOT NULL COLLATE NOCASE UNIQUE,
+  barcode TEXT NOT NULL DEFAULT '' COLLATE NOCASE,
   selling_price_minor INTEGER NOT NULL CHECK (selling_price_minor >= 0),
   reorder_level INTEGER NOT NULL CHECK (reorder_level >= 0),
   requires_prescription INTEGER NOT NULL DEFAULT 0,
   active INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS medicines_barcode_idx ON medicines(barcode);
+CREATE UNIQUE INDEX IF NOT EXISTS medicines_barcode_unique_idx ON medicines(barcode COLLATE NOCASE) WHERE barcode <> '';
 CREATE TABLE IF NOT EXISTS suppliers (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -142,6 +143,12 @@ CREATE TABLE IF NOT EXISTS settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   value_json TEXT NOT NULL
 );
+INSERT OR IGNORE INTO settings (id, value_json) VALUES (1, '{
+  "pharmacyName":"","branchName":"","address":"","phone":"","email":"","taxPin":"","licenceNumber":"",
+  "taxRateBasisPoints":0,"maxCashierDiscountPercent":5,"allowCreditSales":true,
+  "printerConnection":"usb","paperWidth":"mm80","autoPrintReceipt":true,"receiptCopies":1,
+  "printPharmacyDetails":true,"receiptFooter":""
+}');
 `
 
 func Migrate(db *sql.DB) error {

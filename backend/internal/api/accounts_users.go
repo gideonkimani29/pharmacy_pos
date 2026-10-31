@@ -66,6 +66,9 @@ func validCustomerDraft(input customerDraft) bool {
 }
 
 func (s *Server) createCustomerAccount(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
 	var input customerDraft
 	if !decodeJSON(w, r, &input) {
 		return
@@ -91,6 +94,9 @@ func (s *Server) createCustomerAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) updateCustomerAccount(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
 	var input customerDraft
 	if !decodeJSON(w, r, &input) {
 		return
@@ -119,6 +125,9 @@ func (s *Server) updateCustomerAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) setCustomerAccountActive(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
 	var input struct {
 		Active bool `json:"active"`
 	}
@@ -158,8 +167,9 @@ func (s *Server) receiveAccountPayment(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	if input.CustomerID == "" || input.AmountMinor <= 0 ||
-		(input.Method != "cash" && input.Method != "card" && input.Method != "mobile") {
+	if input.CustomerID == "" || input.AmountMinor <= 0 || input.AmountMinor > 1_000_000_000_000 ||
+		(input.Method != "cash" && input.Method != "card" && input.Method != "mobile") ||
+		(input.Method != "cash" && (input.Reference == nil || strings.TrimSpace(*input.Reference) == "")) {
 		writeError(w, http.StatusBadRequest, "validation_error", "Payment fields are invalid.", nil)
 		return
 	}
@@ -312,6 +322,7 @@ func (s *Server) saveSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if strings.TrimSpace(input.PharmacyName) == "" || input.TaxRateBasisPoints < 0 ||
+		input.TaxRateBasisPoints > 10000 ||
 		input.MaxCashierDiscountPercent < 0 || input.MaxCashierDiscountPercent > 100 ||
 		input.ReceiptCopies < 1 || input.ReceiptCopies > 5 {
 		writeError(w, http.StatusBadRequest, "validation_error", "Settings are invalid.", nil)
@@ -397,7 +408,11 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user invitation.", nil)
 			return
 		}
-		password = invitation
+		password, err = newOpaqueToken()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user invitation.", nil)
+			return
+		}
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

@@ -51,7 +51,8 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "validation_error", "A valid Idempotency-Key header is required.", nil)
 		return
 	}
-	if (input.SaleType != "cash" && input.SaleType != "credit") || len(input.Lines) == 0 || input.DiscountMinor < 0 ||
+	if (input.SaleType != "cash" && input.SaleType != "credit") || len(input.Lines) == 0 || len(input.Lines) > 500 ||
+		len(input.Payments) > 100 || input.DiscountMinor < 0 ||
 		input.ExpectedTotalMinor < 0 {
 		writeError(w, http.StatusBadRequest, "validation_error", "Sale fields are invalid.", nil)
 		return
@@ -64,8 +65,14 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 	}
 	var paymentTotal, cashTotal int64
 	for _, payment := range input.Payments {
-		if payment.AmountMinor <= 0 || (payment.Method != "cash" && payment.Method != "card" && payment.Method != "mobile") {
+		if payment.AmountMinor <= 0 || payment.AmountMinor > 1_000_000_000_000 ||
+			(payment.Method != "cash" && payment.Method != "card" && payment.Method != "mobile") ||
+			(payment.Method != "cash" && (payment.Reference == nil || strings.TrimSpace(*payment.Reference) == "")) {
 			writeError(w, http.StatusBadRequest, "validation_error", "Payment fields are invalid.", nil)
+			return
+		}
+		if paymentTotal > 1_000_000_000_000-payment.AmountMinor {
+			writeError(w, http.StatusBadRequest, "validation_error", "Payment total is too large.", nil)
 			return
 		}
 		paymentTotal += payment.AmountMinor
@@ -310,14 +317,27 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	remainingChange := change
 	for _, payment := range input.Payments {
+		amount := payment.AmountMinor
+		if payment.Method == "cash" && remainingChange > 0 {
+			deduction := amount
+			if deduction > remainingChange {
+				deduction = remainingChange
+			}
+			amount -= deduction
+			remainingChange -= deduction
+		}
+		if amount == 0 {
+			continue
+		}
 		paymentID, err := randomID()
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "internal_error", "Could not record payments.", nil)
 			return
 		}
 		if _, err := tx.ExecContext(r.Context(), `INSERT INTO sale_payments (id, sale_id, method, amount_minor) VALUES (?, ?, ?, ?)`,
-			paymentID, id, payment.Method, payment.AmountMinor); err != nil {
+			paymentID, id, payment.Method, amount); err != nil {
 			writeError(w, http.StatusInternalServerError, "internal_error", "Could not record payments.", nil)
 			return
 		}
@@ -402,7 +422,8 @@ func (s *Server) recordPurchase(w http.ResponseWriter, r *http.Request) {
 	}
 	key := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
 	if key == "" || len(key) > 200 || strings.TrimSpace(input.InvoiceNumber) == "" ||
-		(input.PaymentStatus != "paid" && input.PaymentStatus != "onCredit") || len(input.Lines) == 0 {
+		(input.PaymentStatus != "paid" && input.PaymentStatus != "onCredit") ||
+		len(input.Lines) == 0 || len(input.Lines) > 500 {
 		writeError(w, http.StatusBadRequest, "validation_error", "Purchase fields and Idempotency-Key are required.", nil)
 		return
 	}
@@ -418,8 +439,13 @@ func (s *Server) recordPurchase(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if line.ExpiryDate != nil {
-			if _, err := parseDate(*line.ExpiryDate); err != nil {
+			expiry, err := parseDate(*line.ExpiryDate)
+			if err != nil {
 				writeError(w, http.StatusBadRequest, "validation_error", "expiryDate must be an ISO-8601 date.", nil)
+				return
+			}
+			if !expiry.After(received) {
+				writeError(w, http.StatusBadRequest, "validation_error", "expiryDate must be after receivedOn.", nil)
 				return
 			}
 		}

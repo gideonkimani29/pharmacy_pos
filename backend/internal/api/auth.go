@@ -227,9 +227,19 @@ func (s *Server) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal_error", "Could not set password.", nil)
 		return
 	}
-	if _, err := tx.ExecContext(r.Context(), `UPDATE users SET password_hash = ? WHERE id = ? AND active = 1`,
-		string(passwordHash), userID); err != nil {
+	result, err := tx.ExecContext(r.Context(), `UPDATE users SET password_hash = ? WHERE id = ? AND active = 1`,
+		string(passwordHash), userID)
+	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal_error", "Could not set password.", nil)
+		return
+	}
+	updated, err := result.RowsAffected()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not verify account.", nil)
+		return
+	}
+	if updated != 1 {
+		writeError(w, http.StatusConflict, "user_inactive", "This invitation belongs to an inactive user.", nil)
 		return
 	}
 	if _, err := tx.ExecContext(r.Context(), `DELETE FROM user_invitations WHERE token_hash = ?`, hashToken(request.Token)); err != nil {

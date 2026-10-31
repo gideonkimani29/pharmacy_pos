@@ -48,8 +48,9 @@ class DemoMedicineRepository implements MedicineRepository {
   Future<Result<Medicine>> update(String id, MedicineDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((m) => m.id == id);
-    if (index < 0)
+    if (index < 0) {
       return const Err<Medicine>(ValidationFailure(MedicineMessages.notFound));
+    }
 
     final clash = _clash(draft, exceptId: id);
     if (clash != null) return Err<Medicine>(clash);
@@ -76,8 +77,9 @@ class DemoMedicineRepository implements MedicineRepository {
   Future<Result<Medicine>> setActive(String id, {required bool active}) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((m) => m.id == id);
-    if (index < 0)
+    if (index < 0) {
       return const Err<Medicine>(ValidationFailure(MedicineMessages.notFound));
+    }
     _items[index] = _items[index].copyWith(isActive: active);
     return Ok(_items[index]);
   }
@@ -87,8 +89,9 @@ class DemoMedicineRepository implements MedicineRepository {
     final barcode = draft.barcode.trim().toLowerCase();
     for (final item in _items) {
       if (item.id == exceptId) continue;
-      if (item.sku.toLowerCase() == sku)
+      if (item.sku.toLowerCase() == sku) {
         return const ValidationFailure(MedicineMessages.duplicateSku);
+      }
       if (barcode.isNotEmpty && item.barcode.toLowerCase() == barcode) {
         return const ValidationFailure(MedicineMessages.duplicateBarcode);
       }

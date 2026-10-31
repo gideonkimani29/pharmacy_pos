@@ -43,9 +43,10 @@ class DemoUserRepository implements UserRepository {
   Future<Result<AppUser>> update(String id, UserDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((u) => u.id == id);
-    if (index < 0)
+    if (index < 0) {
       return const Err<AppUser>(
           ValidationFailure(SettingsMessages.userNotFound));
+    }
     if (_emailTaken(draft.email, exceptId: id)) {
       return const Err<AppUser>(
           ValidationFailure(SettingsMessages.duplicateEmail));
@@ -74,9 +75,10 @@ class DemoUserRepository implements UserRepository {
   Future<Result<AppUser>> setActive(String id, {required bool active}) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((u) => u.id == id);
-    if (index < 0)
+    if (index < 0) {
       return const Err<AppUser>(
           ValidationFailure(SettingsMessages.userNotFound));
+    }
 
     final current = _items[index];
     if (!active &&

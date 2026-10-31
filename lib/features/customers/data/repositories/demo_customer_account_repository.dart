@@ -45,9 +45,10 @@ class DemoCustomerAccountRepository implements CustomerAccountRepository {
   Future<Result<CustomerAccount>> update(String id, CustomerDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((c) => c.id == id);
-    if (index < 0)
+    if (index < 0) {
       return const Err<CustomerAccount>(
           ValidationFailure(CustomerMessages.notFound));
+    }
     if (_phoneTaken(draft.phone, exceptId: id)) {
       return const Err<CustomerAccount>(
           ValidationFailure(CustomerMessages.duplicatePhone));
@@ -71,9 +72,10 @@ class DemoCustomerAccountRepository implements CustomerAccountRepository {
       {required bool active}) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((c) => c.id == id);
-    if (index < 0)
+    if (index < 0) {
       return const Err<CustomerAccount>(
           ValidationFailure(CustomerMessages.notFound));
+    }
     _items[index] = _items[index].copyWith(isActive: active);
     return Ok(_items[index]);
   }
@@ -83,14 +85,16 @@ class DemoCustomerAccountRepository implements CustomerAccountRepository {
       AccountPaymentDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _items.indexWhere((c) => c.id == draft.customerId);
-    if (index < 0)
+    if (index < 0) {
       return const Err<CustomerAccount>(
           ValidationFailure(CustomerMessages.notFound));
+    }
 
     final balance = _items[index].balanceMinor;
-    if (balance <= 0)
+    if (balance <= 0) {
       return const Err<CustomerAccount>(
           ValidationFailure(CustomerMessages.noBalance));
+    }
     if (draft.amountMinor > balance) {
       return const Err<CustomerAccount>(
           ValidationFailure(CustomerMessages.paymentExceedsBalance));

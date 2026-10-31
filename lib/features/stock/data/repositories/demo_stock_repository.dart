@@ -22,8 +22,9 @@ class DemoStockRepository implements StockRepository {
   Future<Result<StockBatch>> adjust(StockAdjustmentDraft draft) async {
     await Future<void>.delayed(_latency);
     final index = _batches.indexWhere((b) => b.id == draft.batchId);
-    if (index < 0)
+    if (index < 0) {
       return const Err<StockBatch>(ValidationFailure(StockMessages.notFound));
+    }
     if (_batches[index].quantityOnHand != draft.previousQuantity) {
       return const Err<StockBatch>(
           ValidationFailure(StockMessages.changedElsewhere));

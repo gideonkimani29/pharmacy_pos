@@ -153,6 +153,12 @@ func TestUserInvitationCanBeAcceptedOnlyOnce(t *testing.T) {
 	if !ok || invitation == "" {
 		t.Fatal("create user did not return an invitation token")
 	}
+	invalidLogin := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/login", "", map[string]string{
+		"email": "cashier@example.test", "password": invitation,
+	})
+	if invalidLogin.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("login with invitation token status = %d, want 401", invalidLogin.StatusCode)
+	}
 	accept := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/accept-invitation", "", map[string]string{
 		"token": invitation, "password": "another-secure-password",
 	})
@@ -247,6 +253,61 @@ func TestSaleIdempotencyAndAtomicStock(t *testing.T) {
 	}
 	if stock != 3 {
 		t.Fatalf("stock after sale/retry = %d, want 3", stock)
+	}
+
+	date := time.Now().UTC().Format("2006-01-02")
+	report := request(t, client, http.MethodGet,
+		server.URL+"/api/v1/reports/sales?from="+date+"&to="+date, tokens.AccessToken, nil)
+	if report.StatusCode != http.StatusOK {
+		t.Fatalf("sales report status = %d, want 200", report.StatusCode)
+	}
+	var reportData struct {
+		Days []struct {
+			Transactions int64 `json:"transactions"`
+			ItemsSold    int64 `json:"itemsSold"`
+			GrossMinor   int64 `json:"grossMinor"`
+			DiscountMinor int64 `json:"discountMinor"`
+		} `json:"days"`
+		ByPayment []struct {
+			Method      string `json:"method"`
+			AmountMinor int64  `json:"amountMinor"`
+		} `json:"byPayment"`
+	}
+	if err := json.NewDecoder(report.Body).Decode(&reportData); err != nil {
+		t.Fatal(err)
+	}
+	if len(reportData.Days) != 1 || reportData.Days[0].Transactions != 1 ||
+		reportData.Days[0].ItemsSold != 2 || reportData.Days[0].GrossMinor != 2500 {
+		t.Fatalf("unexpected sales report: %+v", reportData)
+	}
+	var paymentTotal int64
+	for _, payment := range reportData.ByPayment {
+		paymentTotal += payment.AmountMinor
+	}
+	if paymentTotal != reportData.Days[0].GrossMinor {
+		t.Fatalf("payment totals = %d, gross sales = %d", paymentTotal, reportData.Days[0].GrossMinor)
+	}
+}
+
+func TestHealthAndCorsAllowlist(t *testing.T) {
+	_, server := testServer(t)
+	client := server.Client()
+	health := request(t, client, http.MethodGet, server.URL+"/health", "", nil)
+	if health.StatusCode != http.StatusOK {
+		t.Fatalf("health status = %d, want 200", health.StatusCode)
+	}
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/health", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Origin", "https://not-allowed.example")
+	response, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusForbidden {
+		t.Fatalf("disallowed origin status = %d, want 403", response.StatusCode)
 	}
 }
 

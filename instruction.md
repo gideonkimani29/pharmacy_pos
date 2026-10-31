@@ -29,7 +29,9 @@ Requires Go 1.27 or newer. From the repository root in PowerShell:
 
 ```powershell
 Set-Location .\backend
-$env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$secretBytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($secretBytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($secretBytes)
 $env:DATABASE_PATH = "..\data\pharmacy.db"
 $env:CORS_ORIGINS = "http://localhost:5000,http://localhost:3000"
 go run .\cmd\pharmacy-api
@@ -78,6 +80,7 @@ The client should map connection/time-out failures to `NetworkFailure`, HTTP 401
 ## 4. Preserve POS transaction guarantees
 
 - Require `Idempotency-Key` on `POST /sales` and `POST /purchases`. Store the key with the result and return the original result for a retry; reject reuse of the key with a different payload.
+- Sale `payments[].amountMinor` is the tendered amount. The API deducts cash change from the stored cash payment totals so report payment totals reconcile to the net sale total.
 - Submit `expectedTotalMinor` with sales and reject stale prices. The backend must compute the authoritative total and allocate stock by FEFO.
 - In one database transaction, validate the sale, decrement batches, record the sale and payment lines, and update any customer balance.
 - Treat stock quantities, active status, prescription requirements, discounts, and user permissions as server-authoritative.

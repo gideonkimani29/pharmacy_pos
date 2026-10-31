@@ -176,30 +176,24 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "validation_error", "Discount cannot exceed the sale subtotal.", nil)
 		return
 	}
+	var settingsRaw string
+	if err := tx.QueryRowContext(r.Context(), `SELECT value_json FROM settings WHERE id = 1`).Scan(&settingsRaw); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not load pharmacy settings.", nil)
+		return
+	}
+	var settings settingsDTO
+	if err := json.Unmarshal([]byte(settingsRaw), &settings); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Pharmacy settings are invalid.", nil)
+		return
+	}
 	if currentActor(r).Role == "cashier" {
-		maxDiscount := 0
-		var raw string
-		if err := tx.QueryRowContext(r.Context(), `SELECT value_json FROM settings WHERE id = 1`).Scan(&raw); err == nil {
-			var settings settingsDTO
-			if json.Unmarshal([]byte(raw), &settings) == nil {
-				maxDiscount = settings.MaxCashierDiscountPercent
-			}
-		}
-		if input.DiscountMinor*100 > subtotal*int64(maxDiscount) {
+		if input.DiscountMinor*100 > subtotal*int64(settings.MaxCashierDiscountPercent) {
 			writeError(w, http.StatusForbidden, "discount_limit", "Discount exceeds your role limit.", nil)
 			return
 		}
 	}
-	taxRate := 0
-	var settingsRaw string
-	if err := tx.QueryRowContext(r.Context(), `SELECT value_json FROM settings WHERE id = 1`).Scan(&settingsRaw); err == nil {
-		var settings settingsDTO
-		if json.Unmarshal([]byte(settingsRaw), &settings) == nil {
-			taxRate = settings.TaxRateBasisPoints
-		}
-	}
 	taxable := subtotal - input.DiscountMinor
-	total := taxable + (taxable*int64(taxRate)+5000)/10000
+	total := taxable + (taxable*int64(settings.TaxRateBasisPoints)+5000)/10000
 	if input.ExpectedTotalMinor != total {
 		writeError(w, http.StatusConflict, "total_changed", "Sale total changed; refresh and confirm the sale.", map[string]any{"totalMinor": total})
 		return
@@ -228,8 +222,7 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if onAccount > 0 {
-			var allowCredit bool
-			if err := tx.QueryRowContext(r.Context(), `SELECT json_extract(value_json, '$.allowCreditSales') FROM settings WHERE id = 1`).Scan(&allowCredit); err == nil && !allowCredit {
+			if !settings.AllowCreditSales {
 				writeError(w, http.StatusForbidden, "credit_disabled", "Credit sales are disabled.", nil)
 				return
 			}
@@ -336,8 +329,8 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "internal_error", "Could not record payments.", nil)
 			return
 		}
-		if _, err := tx.ExecContext(r.Context(), `INSERT INTO sale_payments (id, sale_id, method, amount_minor) VALUES (?, ?, ?, ?)`,
-			paymentID, id, payment.Method, amount); err != nil {
+		if _, err := tx.ExecContext(r.Context(), `INSERT INTO sale_payments (id, sale_id, method, amount_minor, reference) VALUES (?, ?, ?, ?, ?)`,
+			paymentID, id, payment.Method, amount, payment.Reference); err != nil {
 			writeError(w, http.StatusInternalServerError, "internal_error", "Could not record payments.", nil)
 			return
 		}

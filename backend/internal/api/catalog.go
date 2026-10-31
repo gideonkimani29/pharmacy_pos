@@ -315,6 +315,10 @@ func (s *Server) adjustStock(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "validation_error", "Stock adjustment fields are invalid.", nil)
 		return
 	}
+	if input.Reason == "other" && strings.TrimSpace(input.Note) == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "A note is required for an 'other' adjustment.", nil)
+		return
+	}
 	tx, err := s.db.BeginTx(r.Context(), nil)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal_error", "Could not adjust stock.", nil)

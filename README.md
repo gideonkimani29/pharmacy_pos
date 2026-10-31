@@ -41,7 +41,9 @@ The Go REST API is in `backend\` and uses SQLite. Start it in PowerShell:
 
 ```powershell
 Set-Location .\backend
-$env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$secretBytes = New-Object byte[] 48
+[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($secretBytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($secretBytes)
 go run .\cmd\pharmacy-api
 ```
 

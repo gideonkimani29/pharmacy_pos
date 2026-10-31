@@ -101,7 +101,8 @@ CREATE TABLE IF NOT EXISTS sale_payments (
   id TEXT PRIMARY KEY,
   sale_id TEXT NOT NULL REFERENCES sales(id),
   method TEXT NOT NULL,
-  amount_minor INTEGER NOT NULL
+  amount_minor INTEGER NOT NULL,
+  reference TEXT
 );
 CREATE TABLE IF NOT EXISTS purchases (
   id TEXT PRIMARY KEY,

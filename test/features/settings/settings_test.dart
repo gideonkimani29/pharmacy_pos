@@ -17,8 +17,8 @@ import 'package:pharmacy_pos/features/settings/presentation/settings_constants.d
 final DateTime _now = DateTime(2026, 10, 7);
 
 SettingsCubit _cubit() {
-  final settings = DemoSettingsRepository();
-  final users = DemoUserRepository(clock: () => _now);
+  final settings = DemoSettingsRepository(settings: _testSettings);
+  final users = DemoUserRepository(users: _testUsers);
   return SettingsCubit(
     getSettings: GetSettings(settings),
     saveSettings: SaveSettings(settings),
@@ -28,8 +28,31 @@ SettingsCubit _cubit() {
   );
 }
 
-Future<AppSettings> _demoSettings() async =>
-    (await DemoSettingsRepository().load() as Ok<AppSettings>).value;
+const AppSettings _testSettings = AppSettings(
+  pharmacyName: 'Test Pharmacy',
+  branchName: 'Test Branch',
+  address: '',
+  phone: '',
+  email: '',
+  taxPin: '',
+  licenceNumber: '',
+  taxRateBasisPoints: 0,
+  maxCashierDiscountPercent: 5,
+  allowCreditSales: true,
+  printerConnection: PrinterConnection.usb,
+  paperWidth: PaperWidth.mm80,
+  autoPrintReceipt: true,
+  receiptCopies: 1,
+  printPharmacyDetails: true,
+  receiptFooter: '',
+);
+
+final List<AppUser> _testUsers = [
+  AppUser(id: 'u1', name: 'Alex Admin', email: 'alex.admin@testing.example', phone: '', role: UserRole.admin, isActive: true, lastSignInAt: _now),
+  AppUser(id: 'u2', name: 'Pat Pharmacist', email: 'pat.pharmacist@testing.example', phone: '', role: UserRole.pharmacist, isActive: true, lastSignInAt: _now.subtract(const Duration(days: 1))),
+  AppUser(id: 'u3', name: 'Casey Cashier', email: 'casey.cashier@testing.example', phone: '', role: UserRole.cashier, isActive: true, lastSignInAt: _now),
+  AppUser(id: 'u4', name: 'Sam Former', email: 'sam.former@testing.example', phone: '', role: UserRole.cashier, isActive: false, lastSignInAt: _now.subtract(const Duration(days: 120))),
+];
 
 void main() {
   group('tax rate typing', () {
@@ -47,8 +70,8 @@ void main() {
     late SaveSettings useCase;
 
     setUp(() async {
-      base = await _demoSettings();
-      useCase = SaveSettings(DemoSettingsRepository());
+      base = _testSettings;
+      useCase = SaveSettings(DemoSettingsRepository(settings: _testSettings));
     });
 
     Future<String?> failureOf(AppSettings s) async {
@@ -56,14 +79,14 @@ void main() {
       return result is Err<AppSettings> ? result.failure.message : null;
     }
 
-    test('accepts the demo settings and tidies text before saving', () async {
+    test('accepts settings and tidies text before saving', () async {
       final result = await useCase(base.copyWith(
-        pharmacyName: '  Demo Pharmacy  ',
+        pharmacyName: '  Test Pharmacy  ',
         phone: '+254 700-000 111',
         taxPin: ' a123456789b ',
       ));
       final saved = (result as Ok<AppSettings>).value;
-      expect(saved.pharmacyName, 'Demo Pharmacy');
+      expect(saved.pharmacyName, 'Test Pharmacy');
       expect(saved.phone, '+254700000111');
       expect(saved.taxPin, 'A123456789B');
     });
@@ -103,7 +126,7 @@ void main() {
     late SetUserActive setActive;
 
     setUp(() {
-      repository = DemoUserRepository(clock: () => _now);
+      repository = DemoUserRepository(users: _testUsers);
       saveUser = SaveUser(repository);
       setActive = SetUserActive(repository);
     });
@@ -138,10 +161,10 @@ void main() {
     });
 
     test('rejects an email already in use, in any letter case, but allows re-saving the same user', () async {
-      expect(await failureOf(draft(email: 'ALEX.admin@demopharmacy.example')), SettingsMessages.duplicateEmail);
+      expect(await failureOf(draft(email: 'ALEX.admin@testing.example')), SettingsMessages.duplicateEmail);
       expect(
         await failureOf(
-          draft(name: 'Alex Admin', email: 'alex.admin@demopharmacy.example', role: UserRole.admin),
+          draft(name: 'Alex Admin', email: 'alex.admin@testing.example', role: UserRole.admin),
           id: 'u1',
         ),
         isNull,
@@ -151,7 +174,7 @@ void main() {
     test('the only active admin cannot be demoted or deactivated', () async {
       expect(
         await failureOf(
-          draft(name: 'Alex Admin', email: 'alex.admin@demopharmacy.example', role: UserRole.pharmacist),
+          draft(name: 'Alex Admin', email: 'alex.admin@testing.example', role: UserRole.pharmacist),
           id: 'u1',
         ),
         SettingsMessages.lastAdmin,
@@ -191,7 +214,7 @@ void main() {
       expect(cubit.state.isDirty, isTrue);
       cubit.discard();
       expect(cubit.state.isDirty, isFalse);
-      expect(cubit.state.draft!.branchName, 'Eldoret');
+      expect(cubit.state.draft!.branchName, 'Test Branch');
       expect(cubit.state.formVersion, version + 1);
       await cubit.close();
     });
@@ -211,7 +234,7 @@ void main() {
       expect(cubit.state.saveError, SettingsMessages.nameMissing);
       expect(cubit.state.isDirty, isTrue);
       expect(cubit.state.saving, isFalse);
-      cubit.edit((s) => s.copyWith(pharmacyName: 'Demo Pharmacy'));
+      cubit.edit((s) => s.copyWith(pharmacyName: 'Test Pharmacy'));
       expect(cubit.state.saveError, isNull); // the message clears as soon as the user edits again
       await cubit.close();
     });
@@ -277,7 +300,7 @@ void main() {
       cubit.edit((s) => s.copyWith(branchName: 'Somewhere else'));
       await cubit.load();
       expect(cubit.state.isDirty, isFalse);
-      expect(cubit.state.draft!.branchName, 'Eldoret');
+      expect(cubit.state.draft!.branchName, 'Test Branch');
       await cubit.close();
     });
   });

@@ -4,10 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_dimens.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/result/result.dart';
 import '../../../../core/utils/money.dart';
+import '../../../settings/domain/entities/app_settings.dart';
+import '../../../settings/domain/repositories/settings_repository.dart';
 import '../../domain/entities/sale_type.dart';
 import '../bloc/cart_bloc.dart';
 import '../bloc/product_search_bloc.dart';
+import '../receipt_printer.dart';
 import '../widgets/barcode_keyboard_listener.dart';
 import '../widgets/cart_panel.dart';
 import '../widgets/customer_selector.dart';
@@ -183,9 +187,45 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Future<void> _onSaleCompleted(BuildContext context, CartState state) async {
     final receipt = state.receipt;
     final cart = context.read<CartBloc>();
-    if (receipt != null) await SaleCompleteDialog.show(this.context, receipt);
+    if (receipt != null) {
+      final result = await this.context.read<SettingsRepository>().load();
+      AppSettings? settings;
+      switch (result) {
+        case Ok<AppSettings>(:final value):
+          settings = value;
+        case Err<AppSettings>(:final failure):
+          _showSnackBar('Receipt settings could not be loaded: ${failure.message}');
+      }
+
+      if (!mounted) return;
+      if (settings?.autoPrintReceipt ?? false) {
+        await _printReceipt(state, receipt, settings!);
+      }
+      if (!mounted) return;
+      await SaleCompleteDialog.show(
+        this.context,
+        receipt: receipt,
+        onPrint: settings == null ? null : () => _printReceipt(state, receipt, settings!),
+      );
+    }
     cart.add(const CartSaleAcknowledged());
     if (mounted) _focusSearch();
+  }
+
+  Future<void> _printReceipt(
+    CartState cart,
+    SaleReceipt receipt,
+    AppSettings settings,
+  ) async {
+    try {
+      await ReceiptPrinter.printReceipt(
+        settings: settings,
+        cart: cart,
+        receipt: receipt,
+      );
+    } on Exception catch (error) {
+      if (mounted) _showSnackBar('Receipt could not be printed: $error');
+    }
   }
 
   // ---- build -------------------------------------------------------------

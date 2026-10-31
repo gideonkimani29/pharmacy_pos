@@ -7,17 +7,17 @@ import '../../../../core/utils/money.dart';
 import '../../domain/entities/sale.dart';
 
 class SaleCompleteDialog extends StatelessWidget {
-  const SaleCompleteDialog({super.key, required this.receipt, required this.onPrint});
+  const SaleCompleteDialog({super.key, required this.receipt, this.onPrint});
 
   static const double _iconSize = 48;
 
   final SaleReceipt receipt;
-  final Future<void> Function() onPrint;
+  final Future<void> Function()? onPrint;
 
   static Future<void> show(
     BuildContext context, {
     required SaleReceipt receipt,
-    required Future<void> Function() onPrint,
+    Future<void> Function()? onPrint,
   }) {
     return showDialog<void>(
       context: context,
@@ -50,11 +50,12 @@ class SaleCompleteDialog extends StatelessWidget {
         ),
       ),
       actions: [
-        TextButton.icon(
-          onPressed: onPrint,
-          icon: const Icon(Icons.print),
-          label: const Text('Print receipt'),
-        ),
+        if (onPrint != null)
+          TextButton.icon(
+            onPressed: onPrint,
+            icon: const Icon(Icons.print),
+            label: const Text('Print receipt'),
+          ),
         FilledButton(
           autofocus: true,
           onPressed: () => Navigator.of(context).pop(),

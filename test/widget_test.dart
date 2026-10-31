@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pharmacy_pos/app.dart';
-import 'package:pharmacy_pos/core/constants/app_strings.dart';
 
 void main() {
   testWidgets('app requires sign-in before entering the POS', (tester) async {

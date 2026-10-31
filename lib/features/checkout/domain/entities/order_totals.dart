@@ -20,8 +20,10 @@ class OrderTotals extends Equatable {
         : (discountMinor > subtotalMinor ? subtotalMinor : discountMinor);
     const half = AppConfig.basisPointsDenominator ~/ 2;
     final taxable = subtotalMinor - discount;
-    final tax = (taxable * taxRateBasisPoints + half) ~/ AppConfig.basisPointsDenominator;
-    return OrderTotals(subtotalMinor: subtotalMinor, discountMinor: discount, taxMinor: tax);
+    final tax = (taxable * taxRateBasisPoints + half) ~/
+        AppConfig.basisPointsDenominator;
+    return OrderTotals(
+        subtotalMinor: subtotalMinor, discountMinor: discount, taxMinor: tax);
   }
 
   final int subtotalMinor;

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 
+import 'core/constants/app_config.dart';
 import 'core/constants/app_strings.dart';
 import 'core/network/api_session.dart';
 import 'core/network/login_page.dart';
@@ -101,10 +102,12 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
         animation: _session,
         builder: (context, _) {
           if (!_session.isInitialized) {
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+                body: Center(child: CircularProgressIndicator()));
           }
           if (_session.restoreError case final error?) {
-            return _ConnectionError(error: error.message, onRetry: _session.restore);
+            return _ConnectionError(
+                error: error.message, onRetry: _session.restore);
           }
           if (!_session.isAuthenticated) {
             _taxRateFuture = null;
@@ -121,7 +124,8 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
                 );
               }
               if (!snapshot.hasData) {
-                return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()));
               }
               return _authenticatedHome(snapshot.data!);
             },
@@ -134,8 +138,11 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
   Future<int> _loadTaxRate() async {
     final settings = apiObject(await _session.get('settings'));
     final taxRate = settings['taxRateBasisPoints'];
-    if (taxRate is! int || taxRate < 0 || taxRate > AppConfig.basisPointsDenominator) {
-      throw const FormatException('The API returned an invalid pharmacy tax rate.');
+    if (taxRate is! int ||
+        taxRate < 0 ||
+        taxRate > AppConfig.basisPointsDenominator) {
+      throw const FormatException(
+          'The API returned an invalid pharmacy tax rate.');
     }
     return taxRate;
   }
@@ -149,25 +156,39 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
       value: _session,
       child: MultiRepositoryProvider(
         providers: [
-          RepositoryProvider<ProductRepository>(create: (_) => RestProductRepository(_session)),
-          RepositoryProvider<SaleRepository>(create: (_) => RestSaleRepository(_session)),
-          RepositoryProvider<CustomerRepository>(create: (_) => RestCustomerRepository(_session)),
-          RepositoryProvider<DashboardRepository>(create: (_) => RestDashboardRepository(_session)),
-          RepositoryProvider<SupplierRepository>(create: (_) => RestSupplierRepository(_session)),
-          RepositoryProvider<PurchaseRepository>(create: (_) => RestPurchaseRepository(_session)),
-          RepositoryProvider<MedicineRepository>(create: (_) => RestMedicineRepository(_session)),
-          RepositoryProvider<StockRepository>(create: (_) => RestStockRepository(_session)),
-          RepositoryProvider<ReportRepository>(create: (_) => RestReportRepository(_session)),
-          RepositoryProvider<SettingsRepository>(create: (_) => RestSettingsRepository(_session)),
-          RepositoryProvider<UserRepository>(create: (_) => RestUserRepository(_session)),
-          RepositoryProvider<CustomerAccountRepository>(create: (_) => RestCustomerAccountRepository(_session)),
+          RepositoryProvider<ProductRepository>(
+              create: (_) => RestProductRepository(_session)),
+          RepositoryProvider<SaleRepository>(
+              create: (_) => RestSaleRepository(_session)),
+          RepositoryProvider<CustomerRepository>(
+              create: (_) => RestCustomerRepository(_session)),
+          RepositoryProvider<DashboardRepository>(
+              create: (_) => RestDashboardRepository(_session)),
+          RepositoryProvider<SupplierRepository>(
+              create: (_) => RestSupplierRepository(_session)),
+          RepositoryProvider<PurchaseRepository>(
+              create: (_) => RestPurchaseRepository(_session)),
+          RepositoryProvider<MedicineRepository>(
+              create: (_) => RestMedicineRepository(_session)),
+          RepositoryProvider<StockRepository>(
+              create: (_) => RestStockRepository(_session)),
+          RepositoryProvider<ReportRepository>(
+              create: (_) => RestReportRepository(_session)),
+          RepositoryProvider<SettingsRepository>(
+              create: (_) => RestSettingsRepository(_session)),
+          RepositoryProvider<UserRepository>(
+              create: (_) => RestUserRepository(_session)),
+          RepositoryProvider<CustomerAccountRepository>(
+              create: (_) => RestCustomerAccountRepository(_session)),
         ],
         child: MultiBlocProvider(
           providers: [
             BlocProvider<ProductSearchBloc>(
               create: (context) => ProductSearchBloc(
-                searchProducts: SearchProducts(context.read<ProductRepository>()),
-                findProductByBarcode: FindProductByBarcode(context.read<ProductRepository>()),
+                searchProducts:
+                    SearchProducts(context.read<ProductRepository>()),
+                findProductByBarcode:
+                    FindProductByBarcode(context.read<ProductRepository>()),
               ),
             ),
             BlocProvider<CartBloc>(
@@ -177,17 +198,21 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
               ),
             ),
             BlocProvider<CustomersCubit>(
-              create: (context) =>
-                  CustomersCubit(getCustomers: GetCustomers(context.read<CustomerRepository>()))..load(),
+              create: (context) => CustomersCubit(
+                  getCustomers:
+                      GetCustomers(context.read<CustomerRepository>()))
+                ..load(),
             ),
             BlocProvider<DashboardCubit>(
               create: (context) => DashboardCubit(
-                getDashboardSummary: GetDashboardSummary(context.read<DashboardRepository>()),
+                getDashboardSummary:
+                    GetDashboardSummary(context.read<DashboardRepository>()),
               ),
             ),
             BlocProvider<PurchasesCubit>(
-              create: (context) =>
-                  PurchasesCubit(getPurchases: GetPurchases(context.read<PurchaseRepository>())),
+              create: (context) => PurchasesCubit(
+                  getPurchases:
+                      GetPurchases(context.read<PurchaseRepository>())),
             ),
             BlocProvider<MedicinesCubit>(
               create: (context) {
@@ -245,10 +270,13 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
           ],
           child: BlocListener<SettingsCubit, SettingsState>(
             listenWhen: (previous, current) =>
-                previous.saved?.taxRateBasisPoints != current.saved?.taxRateBasisPoints,
+                previous.saved?.taxRateBasisPoints !=
+                current.saved?.taxRateBasisPoints,
             listener: (context, state) {
               final rate = state.saved?.taxRateBasisPoints;
-              if (rate != null) context.read<CartBloc>().add(CartTaxRateChanged(rate));
+              if (rate != null) {
+                context.read<CartBloc>().add(CartTaxRateChanged(rate));
+              }
             },
             child: AppShell(onLogout: _logout),
           ),
@@ -263,19 +291,24 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
     } on ApiException catch (error) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signed out here, but API revocation failed: ${error.message}')),
+          SnackBar(
+              content: Text(
+                  'Signed out here, but API revocation failed: ${error.message}')),
         );
       }
     } on http.ClientException {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signed out here; the API could not revoke the session while offline.')),
+          const SnackBar(
+              content: Text(
+                  'Signed out here; the API could not revoke the session while offline.')),
         );
       }
     } on TimeoutException {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signed out here; API revocation timed out.')),
+          const SnackBar(
+              content: Text('Signed out here; API revocation timed out.')),
         );
       }
     }
@@ -299,7 +332,8 @@ class _ConnectionError extends StatelessWidget {
             children: [
               Text(error, textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              FilledButton(onPressed: onRetry, child: const Text('Retry connection')),
+              FilledButton(
+                  onPressed: onRetry, child: const Text('Retry connection')),
             ],
           ),
         ),

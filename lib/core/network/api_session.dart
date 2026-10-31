@@ -8,7 +8,8 @@ import 'package:http/http.dart' as http;
 abstract interface class TokenStorage {
   Future<String?> readAccessToken();
   Future<String?> readRefreshToken();
-  Future<void> writeTokens({required String accessToken, required String refreshToken});
+  Future<void> writeTokens(
+      {required String accessToken, required String refreshToken});
   Future<void> clear();
 }
 
@@ -28,7 +29,8 @@ class SecureTokenStorage implements TokenStorage {
   Future<String?> readRefreshToken() => _storage.read(key: _refreshKey);
 
   @override
-  Future<void> writeTokens({required String accessToken, required String refreshToken}) async {
+  Future<void> writeTokens(
+      {required String accessToken, required String refreshToken}) async {
     await _storage.write(key: _accessKey, value: accessToken);
     await _storage.write(key: _refreshKey, value: refreshToken);
   }
@@ -84,9 +86,12 @@ class ApiSession extends ChangeNotifier {
   static Uri _parseBaseUrl(String value) {
     final trimmed = value.trim();
     final uri = Uri.tryParse(trimmed);
-    if (uri == null || !uri.hasScheme || uri.host.isEmpty ||
+    if (uri == null ||
+        !uri.hasScheme ||
+        uri.host.isEmpty ||
         (uri.scheme != 'http' && uri.scheme != 'https')) {
-      throw ArgumentError.value(value, 'baseUrl', 'Must be an absolute HTTP(S) URL.');
+      throw ArgumentError.value(
+          value, 'baseUrl', 'Must be an absolute HTTP(S) URL.');
     }
     return Uri.parse(trimmed.endsWith('/') ? trimmed : '$trimmed/');
   }
@@ -151,7 +156,8 @@ class ApiSession extends ChangeNotifier {
     _notify();
   }
 
-  Future<void> acceptInvitation({required String token, required String password}) async {
+  Future<void> acceptInvitation(
+      {required String token, required String password}) async {
     await _send(
       'POST',
       'auth/accept-invitation',
@@ -187,9 +193,11 @@ class ApiSession extends ChangeNotifier {
   }) =>
       _send('POST', path, body: body, idempotencyKey: idempotencyKey);
 
-  Future<Object?> put(String path, {Object? body}) => _send('PUT', path, body: body);
+  Future<Object?> put(String path, {Object? body}) =>
+      _send('PUT', path, body: body);
 
-  Future<Object?> patch(String path, {Object? body}) => _send('PATCH', path, body: body);
+  Future<Object?> patch(String path, {Object? body}) =>
+      _send('PATCH', path, body: body);
 
   Uri _uri(String path, Map<String, String>? query) {
     final relative = path.startsWith('/') ? path.substring(1) : path;
@@ -213,9 +221,13 @@ class ApiSession extends ChangeNotifier {
     }
     if (idempotencyKey != null) headers['Idempotency-Key'] = idempotencyKey;
 
-    final request = http.Request(method, _uri(path, query))..headers.addAll(headers);
+    final request = http.Request(method, _uri(path, query))
+      ..headers.addAll(headers);
     if (body != null) request.body = jsonEncode(body);
-    final response = await _client.send(request).then(http.Response.fromStream).timeout(_timeout);
+    final response = await _client
+        .send(request)
+        .then(http.Response.fromStream)
+        .timeout(_timeout);
     if (response.statusCode == 401 && authenticated && allowRefresh) {
       if (await _refreshSession()) {
         return _send(
@@ -276,8 +288,12 @@ class ApiSession extends ChangeNotifier {
     final data = _object(value);
     final access = data['accessToken'];
     final refresh = data['refreshToken'];
-    if (access is! String || access.isEmpty || refresh is! String || refresh.isEmpty) {
-      throw const FormatException('The API returned an invalid token response.');
+    if (access is! String ||
+        access.isEmpty ||
+        refresh is! String ||
+        refresh.isEmpty) {
+      throw const FormatException(
+          'The API returned an invalid token response.');
     }
     await _tokenStorage.writeTokens(accessToken: access, refreshToken: refresh);
     _accessToken = access;

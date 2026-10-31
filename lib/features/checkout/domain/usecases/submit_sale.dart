@@ -15,19 +15,24 @@ class SubmitSale {
 
   Future<Result<SaleReceipt>> call(SaleRequest request) {
     final failure = _validate(request);
-    if (failure != null) return Future.value(Err<SaleReceipt>(failure));
+    if (failure != null) {
+      return Future.value(Err<SaleReceipt>(failure));
+    }
     return _repository.submit(request);
   }
 
   Failure? _validate(SaleRequest request) {
-    if (request.lines.isEmpty) return const ValidationFailure(AppStrings.errorCartEmpty);
+    if (request.lines.isEmpty) {
+      return const ValidationFailure(AppStrings.errorCartEmpty);
+    }
 
     final needsRx = request.lines.any((line) => line.requiresPrescription);
     if (needsRx && !request.prescriptionVerified) {
       return const ValidationFailure(AppStrings.errorRxNotVerified);
     }
 
-    if (request.discountMinor < 0 || request.discountMinor > request.subtotalMinor) {
+    if (request.discountMinor < 0 ||
+        request.discountMinor > request.subtotalMinor) {
       return const ValidationFailure(AppStrings.errorInvalidDiscount);
     }
 
@@ -50,12 +55,20 @@ class SubmitSale {
         .fold(0, (sum, p) => sum + p.amountMinor);
 
     if (isCredit) {
-      return tendered > total ? const ValidationFailure(AppStrings.errorCreditOverpay) : null;
+      return tendered > total
+          ? const ValidationFailure(AppStrings.errorCreditOverpay)
+          : null;
     }
 
-    if (request.payments.isEmpty) return const ValidationFailure(AppStrings.errorNoPayment);
-    if (tendered < total) return const ValidationFailure(AppStrings.errorPaymentShort);
-    if (nonCash > total) return const ValidationFailure(AppStrings.errorNonCashOverpay);
+    if (request.payments.isEmpty) {
+      return const ValidationFailure(AppStrings.errorNoPayment);
+    }
+    if (tendered < total) {
+      return const ValidationFailure(AppStrings.errorPaymentShort);
+    }
+    if (nonCash > total) {
+      return const ValidationFailure(AppStrings.errorNonCashOverpay);
+    }
     return null;
   }
 }

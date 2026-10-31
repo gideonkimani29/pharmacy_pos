@@ -1,6 +1,6 @@
 # Go Backend Integration Instructions
 
-This repository now includes a Go REST API in `backend\`. The Flutter app still uses in-memory `Demo*Repository` classes; implementing Flutter's HTTP repositories and switching the composition root is a separate remaining integration step. API paths below describe the current service. SQLite schema is created idempotently at startup; back up the DB file before deployments and upgrades.
+This repository includes a Go REST API in `backend\` and a Flutter client connected through REST-backed repositories. The Flutter client stores rotating access/refresh tokens using platform secure storage and loads pharmacy tax settings before enabling the POS. API paths below describe the current service. SQLite schema is created idempotently at startup; back up the DB file before deployments and upgrades.
 
 ## 1. Agree on the API contract
 
@@ -143,19 +143,19 @@ flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8080/api/v1
 
 Use the corresponding target address above for emulator/device runs. Production builds should use the deployed HTTPS API URL.
 
-## 6. Wire Flutter without changing the UI layer
+## 6. Flutter client integration
 
-The app already defines domain repository interfaces under each feature's `domain/repositories` directory. Add REST-backed implementations under the matching `data/repositories` directory, plus a shared HTTP client and request/response DTOs. Keep JSON parsing and HTTP concerns in the data layer; map responses into existing domain entities and map transport/API errors into the existing `Failure` types.
+The composition root in `lib\app.dart` registers REST-backed implementations for the existing repository interfaces. `lib\features\shared\data\rest_repositories.dart` maps API DTOs into domain entities; `lib\core\network\api_session.dart` handles configured HTTP requests, token refresh/retry, and secure token storage. Authentication and invitation acceptance are available from the sign-in screen. The client does not silently fall back to demo data when the API is unavailable.
 
-Replace the `Demo*Repository` registrations in `lib/app.dart` with the REST-backed implementations. Keep demo data only behind an explicit development configuration; do not silently fall back to demo values when the API is unavailable. Preserve existing client-side validation for fast feedback, but rely on the Go API to repeat all security and business-critical validation.
+The API's configured tax rate is loaded before the POS is shown and used for checkout totals; saving a changed tax rate updates the active cart. Continue to rely on the Go API for authoritative prices, stock, permissions, and transaction validation. Suppliers can be listed but not created from the current Flutter UI; provision at least one supplier through `POST /api/v1/suppliers` before recording purchases. Sales returns remain outside scope because the Flutter app has no returns repository/domain flow.
 
-Before replacing all demos, verify one read path and one write path against the real Go service, including unauthorized, validation, timeout, malformed-response, and duplicate-idempotency cases. Then cover every repository and run:
+After changing the client or backend, run:
 
 ```powershell
 flutter analyze
 flutter test
 ```
 
-## 7. Remaining Flutter work and limitations
+## 7. Current limitations
 
-The backend contract is implemented but has not yet been connected to Flutter. Implement a shared configured HTTP client, secure token persistence, error mapping, data-transfer objects, and all repository adapters before replacing the `Demo*Repository` registrations. Confirm the deployment API URL and the intended token-storage strategy for each supported Flutter platform first. There is no returns workflow yet; suppliers can be added directly through the backend API although the Flutter app currently has no supplier-management screen.
+There is no returns workflow or supplier-creation screen in Flutter. Cashiers cannot access admin-only settings, users, purchase costs, or profit/loss reports; authorization is enforced by the API. Platform-specific secure-storage configuration may be needed when adding new Flutter targets. The configured API host must be reachable from the selected desktop, browser, emulator, or physical device.

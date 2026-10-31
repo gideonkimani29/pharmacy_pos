@@ -22,7 +22,8 @@ class SaleLine extends Equatable {
   int get lineTotalMinor => unitPriceMinor * quantity;
 
   @override
-  List<Object?> get props => [productId, productName, quantity, unitPriceMinor, requiresPrescription];
+  List<Object?> get props =>
+      [productId, productName, quantity, unitPriceMinor, requiresPrescription];
 }
 
 class SaleRequest extends Equatable {
@@ -52,7 +53,8 @@ class SaleRequest extends Equatable {
   /// Total the cashier saw. The backend rejects the sale if prices drifted.
   final int expectedTotalMinor;
 
-  int get subtotalMinor => lines.fold(0, (sum, line) => sum + line.lineTotalMinor);
+  int get subtotalMinor =>
+      lines.fold(0, (sum, line) => sum + line.lineTotalMinor);
 
   @override
   List<Object?> get props => [
@@ -84,5 +86,11 @@ class SaleReceipt extends Equatable {
   final DateTime completedAt;
 
   @override
-  List<Object?> get props => [receiptNumber, totalMinor, changeDueMinor, amountOnAccountMinor, completedAt];
+  List<Object?> get props => [
+        receiptNumber,
+        totalMinor,
+        changeDueMinor,
+        amountOnAccountMinor,
+        completedAt
+      ];
 }

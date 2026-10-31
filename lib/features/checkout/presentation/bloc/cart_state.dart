@@ -55,13 +55,15 @@ class CartState extends Equatable {
   bool get isEmpty => items.isEmpty;
   bool get isSubmitting => status == CartStatus.submitting;
   int get unitCount => items.fold(0, (sum, item) => sum + item.quantity);
-  int get subtotalMinor => items.fold(0, (sum, item) => sum + item.lineTotalMinor);
+  int get subtotalMinor =>
+      items.fold(0, (sum, item) => sum + item.lineTotalMinor);
   OrderTotals get totals => OrderTotals.fromSubtotal(
         subtotalMinor,
         discountMinor: discountMinor,
         taxRateBasisPoints: taxRateBasisPoints,
       );
-  bool get requiresPrescriptionCheck => items.any((item) => item.product.requiresPrescription);
+  bool get requiresPrescriptionCheck =>
+      items.any((item) => item.product.requiresPrescription);
 
   bool get canCheckout =>
       items.isNotEmpty &&

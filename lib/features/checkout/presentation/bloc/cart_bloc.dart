@@ -23,10 +23,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     required SubmitSale submitSale,
     DateTime Function()? clock,
     int taxRateBasisPoints = AppConfig.taxRateBasisPoints,
-  })
-      : _submitSale = submitSale,
+  })  : _submitSale = submitSale,
         _clock = clock ?? DateTime.now,
-        super(CartState.initial(_newKey(), taxRateBasisPoints: taxRateBasisPoints)) {
+        super(CartState.initial(_newKey(),
+            taxRateBasisPoints: taxRateBasisPoints)) {
     on<CartProductAdded>(_onProductAdded);
     on<CartQuantityChanged>(_onQuantityChanged);
     on<CartItemRemoved>(_onItemRemoved);
@@ -49,21 +49,27 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   final DateTime Function() _clock;
   int _noticeSequence = 0;
 
-  static String _newKey() => '${DateTime.now().microsecondsSinceEpoch}-${_random.nextInt(_keyRandomRange)}';
+  static String _newKey() =>
+      '${DateTime.now().microsecondsSinceEpoch}-${_random.nextInt(_keyRandomRange)}';
 
   void _notify(Emitter<CartState> emit, String message) {
-    emit(state.copyWith(notice: CartNotice(id: ++_noticeSequence, message: message)));
+    emit(state.copyWith(
+        notice: CartNotice(id: ++_noticeSequence, message: message)));
   }
 
-  int _maxQuantity(Product product) => min(product.sellableStock, AppConfig.maxLineQuantity);
+  int _maxQuantity(Product product) =>
+      min(product.sellableStock, AppConfig.maxLineQuantity);
 
   /// Any change to what will be posted gets a fresh idempotency key, so a
   /// stale key is never reused with a different payload.
-  void _emitItems(Emitter<CartState> emit, List<CartItem> items, {bool resetPrescription = false}) {
-    final stillNeedsCheck = items.any((item) => item.product.requiresPrescription);
+  void _emitItems(Emitter<CartState> emit, List<CartItem> items,
+      {bool resetPrescription = false}) {
+    final stillNeedsCheck =
+        items.any((item) => item.product.requiresPrescription);
     emit(state.copyWith(
       items: items,
-      prescriptionVerified: stillNeedsCheck && !resetPrescription && state.prescriptionVerified,
+      prescriptionVerified:
+          stillNeedsCheck && !resetPrescription && state.prescriptionVerified,
       idempotencyKey: _newKey(),
     ));
   }
@@ -97,7 +103,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   void _onQuantityChanged(CartQuantityChanged event, Emitter<CartState> emit) {
     if (state.isSubmitting) return;
     final items = [...state.items];
-    final index = items.indexWhere((item) => item.product.id == event.productId);
+    final index =
+        items.indexWhere((item) => item.product.id == event.productId);
     if (index < 0) return;
 
     if (event.quantity <= 0) {
@@ -117,20 +124,27 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
   void _onItemRemoved(CartItemRemoved event, Emitter<CartState> emit) {
     if (state.isSubmitting) return;
-    _emitItems(emit, state.items.where((item) => item.product.id != event.productId).toList());
+    _emitItems(
+        emit,
+        state.items
+            .where((item) => item.product.id != event.productId)
+            .toList());
   }
 
   void _onCleared(CartCleared event, Emitter<CartState> emit) {
     if (state.isSubmitting) return;
-    emit(CartState.initial(_newKey(), taxRateBasisPoints: state.taxRateBasisPoints));
+    emit(CartState.initial(_newKey(),
+        taxRateBasisPoints: state.taxRateBasisPoints));
   }
 
-  void _onPrescriptionToggled(CartPrescriptionToggled event, Emitter<CartState> emit) {
+  void _onPrescriptionToggled(
+      CartPrescriptionToggled event, Emitter<CartState> emit) {
     if (state.isSubmitting) return;
     emit(state.copyWith(prescriptionVerified: event.verified));
   }
 
-  void _onCustomerSelected(CartCustomerSelected event, Emitter<CartState> emit) {
+  void _onCustomerSelected(
+      CartCustomerSelected event, Emitter<CartState> emit) {
     if (state.isSubmitting) return;
     emit(state.copyWith(
       customer: event.customer,
@@ -150,15 +164,22 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       _notify(emit, AppStrings.errorInvalidDiscount);
       return;
     }
-
-    void _onTaxRateChanged(CartTaxRateChanged event, Emitter<CartState> emit) {
-      if (state.isSubmitting || state.taxRateBasisPoints == event.taxRateBasisPoints) return;
-      emit(state.copyWith(taxRateBasisPoints: event.taxRateBasisPoints, idempotencyKey: _newKey()));
-    }
-    emit(state.copyWith(discountMinor: event.discountMinor, idempotencyKey: _newKey()));
+    emit(state.copyWith(
+        discountMinor: event.discountMinor, idempotencyKey: _newKey()));
   }
 
-  Future<void> _onCheckoutSubmitted(CartCheckoutSubmitted event, Emitter<CartState> emit) async {
+  void _onTaxRateChanged(CartTaxRateChanged event, Emitter<CartState> emit) {
+    if (state.isSubmitting ||
+        state.taxRateBasisPoints == event.taxRateBasisPoints) {
+      return;
+    }
+    emit(state.copyWith(
+        taxRateBasisPoints: event.taxRateBasisPoints,
+        idempotencyKey: _newKey()));
+  }
+
+  Future<void> _onCheckoutSubmitted(
+      CartCheckoutSubmitted event, Emitter<CartState> emit) async {
     if (!state.canCheckout) return;
     emit(state.copyWith(status: CartStatus.submitting));
 
@@ -193,7 +214,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     }
   }
 
-  void _onSaleAcknowledged(CartSaleAcknowledged event, Emitter<CartState> emit) {
-    emit(CartState.initial(_newKey(), taxRateBasisPoints: state.taxRateBasisPoints));
+  void _onSaleAcknowledged(
+      CartSaleAcknowledged event, Emitter<CartState> emit) {
+    emit(CartState.initial(_newKey(),
+        taxRateBasisPoints: state.taxRateBasisPoints));
   }
 }

@@ -53,8 +53,9 @@ go run .\cmd\pharmacy-api
 Then create the first admin with `POST http://127.0.0.1:8080/api/v1/auth/bootstrap`, providing
 `X-Bootstrap-Token: $env:BOOTSTRAP_TOKEN`. Full API routes,
 authentication, database configuration, and Flutter host/emulator URLs are documented in
-[`instruction.md`](instruction.md). The Flutter UI is not yet wired to these endpoints and still uses
-demo repositories.
+[`instruction.md`](instruction.md). The Flutter app uses the Go API, persists rotating tokens with
+platform secure storage, and requires a reachable API and configured pharmacy settings to sign in.
+Set the client URL with `--dart-define=API_BASE_URL=http://127.0.0.1:8080/api/v1` when needed.
 
 ## Build
 
@@ -77,6 +78,6 @@ test/              cart bloc, sale validation, app smoke test
 
 ## Notes
 
-- Tax is 0% by default (`AppConfig.taxRateBasisPoints`). Confirm with your accountant.
+- Tax is loaded from pharmacy settings and included in checkout totals; the Go API remains authoritative.
 - Discount limits per role must be enforced by the backend. The client only checks the amount is valid.
 - The batch number shown on a cart line is a preview. The backend decides the real allocation.

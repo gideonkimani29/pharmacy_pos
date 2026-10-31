@@ -32,7 +32,8 @@ void main() {
     );
   }
 
-  CartBloc buildBloc() => CartBloc(submitSale: SubmitSale(DemoSaleRepository()), clock: () => now);
+  CartBloc buildBloc() =>
+      CartBloc(submitSale: SubmitSale(DemoSaleRepository()), clock: () => now);
 
   group('CartBloc', () {
     test('adding the same product increments quantity', () async {
@@ -78,9 +79,33 @@ void main() {
     test('checkout with cash completes and reports change', () async {
       final bloc = buildBloc()..add(CartProductAdded(product()));
       await bloc.stream.firstWhere((s) => !s.isEmpty);
-      bloc.add(const CartCheckoutSubmitted([PaymentLine(method: PaymentMethod.cash, amountMinor: 15000)]));
-      final done = await bloc.stream.firstWhere((s) => s.status == CartStatus.completed);
+      bloc.add(const CartCheckoutSubmitted(
+          [PaymentLine(method: PaymentMethod.cash, amountMinor: 15000)]));
+      final done =
+          await bloc.stream.firstWhere((s) => s.status == CartStatus.completed);
       expect(done.receipt?.changeDueMinor, 5000);
+      await bloc.close();
+    });
+
+    test(
+        'uses the configured tax rate for checkout and retains it after clearing',
+        () async {
+      final bloc = CartBloc(
+        submitSale: SubmitSale(DemoSaleRepository()),
+        clock: () => now,
+        taxRateBasisPoints: 1600,
+      );
+      bloc.add(CartProductAdded(product()));
+      await bloc.stream.firstWhere((s) => !s.isEmpty);
+      expect(bloc.state.totals.totalMinor, 11600);
+
+      bloc.add(const CartCheckoutSubmitted([
+        PaymentLine(method: PaymentMethod.cash, amountMinor: 11600),
+      ]));
+      await bloc.stream.firstWhere((s) => s.status == CartStatus.completed);
+      bloc.add(const CartSaleAcknowledged());
+      await bloc.stream.firstWhere((s) => s.isEmpty);
+      expect(bloc.state.taxRateBasisPoints, 1600);
       await bloc.close();
     });
 
@@ -115,13 +140,17 @@ void main() {
         );
 
     test('rejects underpayment', () async {
-      final result = await useCase(request(const [PaymentLine(method: PaymentMethod.cash, amountMinor: 5000)]));
+      final result = await useCase(request(
+          const [PaymentLine(method: PaymentMethod.cash, amountMinor: 5000)]));
       expect(result, isA<Err<SaleReceipt>>());
     });
 
     test('rejects non-cash overpayment', () async {
       final result = await useCase(request(const [
-        PaymentLine(method: PaymentMethod.mobile, amountMinor: 12000, reference: 'QGH7XYZ123'),
+        PaymentLine(
+            method: PaymentMethod.mobile,
+            amountMinor: 12000,
+            reference: 'QGH7XYZ123'),
       ]));
       expect(result, isA<Err<SaleReceipt>>());
     });
@@ -183,10 +212,29 @@ void main() {
 
     test('accepts split tender that covers the total', () async {
       final result = await useCase(request(const [
-        PaymentLine(method: PaymentMethod.mobile, amountMinor: 6000, reference: 'QGH7XYZ123'),
+        PaymentLine(
+            method: PaymentMethod.mobile,
+            amountMinor: 6000,
+            reference: 'QGH7XYZ123'),
         PaymentLine(method: PaymentMethod.cash, amountMinor: 5000),
       ]));
       expect(result, isA<Ok<SaleReceipt>>());
+    });
+
+    test('uses the configured tax rate when validating payment', () async {
+      const taxable = SaleRequest(
+        idempotencyKey: 'taxable',
+        saleType: SaleType.cash,
+        lines: [line],
+        payments: [PaymentLine(method: PaymentMethod.cash, amountMinor: 11600)],
+        prescriptionVerified: false,
+        discountMinor: 0,
+        taxRateBasisPoints: 1600,
+        expectedTotalMinor: 11600,
+      );
+      final result = await useCase(taxable);
+      expect(result, isA<Ok<SaleReceipt>>());
+      expect((result as Ok<SaleReceipt>).value.totalMinor, 11600);
     });
   });
 }

@@ -22,7 +22,8 @@ class _MemoryTokenStorage implements TokenStorage {
   Future<String?> readRefreshToken() async => refreshToken;
 
   @override
-  Future<void> writeTokens({required String accessToken, required String refreshToken}) async {
+  Future<void> writeTokens(
+      {required String accessToken, required String refreshToken}) async {
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
   }
@@ -40,7 +41,8 @@ http.Response _tokens(String access, String refresh) => http.Response(
     );
 
 void main() {
-  test('login persists tokens and forwards bearer and idempotency headers', () async {
+  test('login persists tokens and forwards bearer and idempotency headers',
+      () async {
     final storage = _MemoryTokenStorage();
     final requests = <http.Request>[];
     final session = ApiSession(
@@ -49,7 +51,8 @@ void main() {
       client: MockClient((request) async {
         requests.add(request);
         if (request.url.path == '/api/v1/auth/login') {
-          expect(jsonDecode(request.body), {'email': 'cashier@example.test', 'password': 'secret'});
+          expect(jsonDecode(request.body),
+              {'email': 'cashier@example.test', 'password': 'secret'});
           return _tokens('access-1', 'refresh-1');
         }
         return http.Response(
@@ -80,12 +83,14 @@ void main() {
     expect(storage.accessToken, 'access-1');
     expect(storage.refreshToken, 'refresh-1');
 
-    await session.post('sales', idempotencyKey: 'key-1', body: {'saleType': 'cash'});
+    await session
+        .post('sales', idempotencyKey: 'key-1', body: {'saleType': 'cash'});
     expect(requests.last.headers['authorization'], 'Bearer access-1');
     expect(requests.last.headers['idempotency-key'], 'key-1');
   });
 
-  test('expired access token refreshes and retries the original request once', () async {
+  test('expired access token refreshes and retries the original request once',
+      () async {
     final storage = _MemoryTokenStorage()
       ..accessToken = 'expired'
       ..refreshToken = 'refresh-old';
@@ -110,13 +115,18 @@ void main() {
           if (request.headers['authorization'] == 'Bearer access-stale') {
             return http.Response(
               jsonEncode({
-                'error': {'code': 'unauthorized', 'message': 'Expired', 'details': null}
+                'error': {
+                  'code': 'unauthorized',
+                  'message': 'Expired',
+                  'details': null
+                }
               }),
               401,
               headers: {'content-type': 'application/json'},
             );
           }
-          return http.Response('[]', 200, headers: {'content-type': 'application/json'});
+          return http.Response('[]', 200,
+              headers: {'content-type': 'application/json'});
         }
         throw StateError('Unexpected URL ${request.url}');
       }),
@@ -141,7 +151,11 @@ void main() {
       tokenStorage: storage,
       client: MockClient((request) async => http.Response(
             jsonEncode({
-              'error': {'code': 'invalid_refresh_token', 'message': 'Expired', 'details': null}
+              'error': {
+                'code': 'invalid_refresh_token',
+                'message': 'Expired',
+                'details': null
+              }
             }),
             401,
             headers: {'content-type': 'application/json'},

@@ -20,12 +20,12 @@ class DemoSaleRepository implements SaleRepository {
 
     final existing = _byKey[request.idempotencyKey];
 
-    
     if (existing != null) return Ok(existing);
 
     final total = OrderTotals.fromSubtotal(
       request.subtotalMinor,
       discountMinor: request.discountMinor,
+      taxRateBasisPoints: request.taxRateBasisPoints,
     ).totalMinor;
     final tendered = request.payments.fold(0, (sum, p) => sum + p.amountMinor);
     final isCredit = request.saleType == SaleType.credit;

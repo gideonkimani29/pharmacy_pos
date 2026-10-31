@@ -19,6 +19,8 @@ class DemoSaleRepository implements SaleRepository {
     await Future<void>.delayed(_latency);
 
     final existing = _byKey[request.idempotencyKey];
+
+    
     if (existing != null) return Ok(existing);
 
     final total = OrderTotals.fromSubtotal(

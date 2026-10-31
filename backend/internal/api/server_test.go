@@ -311,6 +311,33 @@ func TestHealthAndCorsAllowlist(t *testing.T) {
 	}
 }
 
+func TestSettingsAreSeededAndTaxRateIsBounded(t *testing.T) {
+	_, server := testServer(t)
+	client := server.Client()
+	bootstrap := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/bootstrap", "", map[string]any{
+		"name": "Admin", "email": "admin@example.test", "password": "a-very-secure-password",
+	})
+	tokens := decodeResponse[tokenResponse](t, bootstrap)
+	settings := request(t, client, http.MethodGet, server.URL+"/api/v1/settings", tokens.AccessToken, nil)
+	if settings.StatusCode != http.StatusOK {
+		t.Fatalf("initial settings status = %d, want 200", settings.StatusCode)
+	}
+	var initial map[string]any
+	if err := json.NewDecoder(settings.Body).Decode(&initial); err != nil {
+		t.Fatal(err)
+	}
+	if initial["allowCreditSales"] != true {
+		t.Fatalf("default allowCreditSales = %v, want true", initial["allowCreditSales"])
+	}
+
+	initial["pharmacyName"] = "Example Pharmacy"
+	initial["taxRateBasisPoints"] = 10001
+	save := request(t, client, http.MethodPut, server.URL+"/api/v1/settings", tokens.AccessToken, initial)
+	if save.StatusCode != http.StatusBadRequest {
+		t.Fatalf("invalid tax settings status = %d, want 400", save.StatusCode)
+	}
+}
+
 func mustJSON(t *testing.T, value any) []byte {
 	t.Helper()
 	result, err := json.Marshal(value)

@@ -33,7 +33,8 @@ class SaleCompleteDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AlertDialog(
-      icon: const Icon(Icons.check_circle, size: _iconSize, color: AppColors.successFg),
+      icon: const Icon(Icons.check_circle,
+          size: _iconSize, color: AppColors.successFg),
       title: const Text(AppStrings.saleComplete),
       content: SizedBox(
         width: AppDimens.compactDialogWidth,
@@ -43,9 +44,13 @@ class SaleCompleteDialog extends StatelessWidget {
             _row(theme, AppStrings.receiptNumber, receipt.receiptNumber),
             _row(theme, AppStrings.total, Money.format(receipt.totalMinor)),
             if (receipt.changeDueMinor > 0)
-              _row(theme, AppStrings.changeDue, Money.format(receipt.changeDueMinor), highlight: true),
+              _row(theme, AppStrings.changeDue,
+                  Money.format(receipt.changeDueMinor),
+                  highlight: true),
             if (receipt.amountOnAccountMinor > 0)
-              _row(theme, AppStrings.onAccount, Money.format(receipt.amountOnAccountMinor), highlight: true),
+              _row(theme, AppStrings.onAccount,
+                  Money.format(receipt.amountOnAccountMinor),
+                  highlight: true),
           ],
         ),
       ),
@@ -65,9 +70,11 @@ class SaleCompleteDialog extends StatelessWidget {
     );
   }
 
-  Widget _row(ThemeData theme, String label, String value, {bool highlight = false}) {
+  Widget _row(ThemeData theme, String label, String value,
+      {bool highlight = false}) {
     final style = highlight
-        ? theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800, color: AppColors.successFg)
+        ? theme.textTheme.titleLarge
+            ?.copyWith(fontWeight: FontWeight.w800, color: AppColors.successFg)
         : theme.textTheme.bodyLarge;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppDimens.spaceXs),

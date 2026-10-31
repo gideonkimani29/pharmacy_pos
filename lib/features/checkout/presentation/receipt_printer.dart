@@ -90,7 +90,9 @@ abstract final class ReceiptPrinter {
               style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
             ),
           for (final line in details)
-            pw.Text(line, textAlign: pw.TextAlign.center, style: const pw.TextStyle(fontSize: 8)),
+            pw.Text(line,
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(fontSize: 8)),
         ],
         pw.SizedBox(height: 6),
         pw.Divider(),
@@ -100,7 +102,8 @@ abstract final class ReceiptPrinter {
         if (cart.customer != null) _receiptRow('Customer', cart.customer!.name),
         pw.Divider(),
         for (final item in cart.items) ...[
-          pw.Text(item.product.name, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.Text(item.product.name,
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           _receiptRow(
             '${item.quantity} x ${Money.format(item.product.unitPriceMinor)}',
             Money.format(item.lineTotalMinor),
@@ -110,7 +113,8 @@ abstract final class ReceiptPrinter {
         pw.Divider(),
         _receiptRow('Subtotal', Money.format(cart.totals.subtotalMinor)),
         if (cart.totals.discountMinor > 0)
-          _receiptRow('Discount', '-${Money.format(cart.totals.discountMinor)}'),
+          _receiptRow(
+              'Discount', '-${Money.format(cart.totals.discountMinor)}'),
         _receiptRow(
           'Tax (${(cart.taxRateBasisPoints / 100).toStringAsFixed(2)}%)',
           Money.format(cart.totals.taxMinor),
@@ -126,13 +130,15 @@ abstract final class ReceiptPrinter {
           _receiptRow('On account', Money.format(receipt.amountOnAccountMinor)),
         if (settings.receiptFooter.trim().isNotEmpty) ...[
           pw.SizedBox(height: 8),
-          pw.Text(settings.receiptFooter.trim(), textAlign: pw.TextAlign.center),
+          pw.Text(settings.receiptFooter.trim(),
+              textAlign: pw.TextAlign.center),
         ],
       ],
     );
   }
 
-  static pw.Widget _receiptRow(String label, String value, {bool bold = false}) {
+  static pw.Widget _receiptRow(String label, String value,
+      {bool bold = false}) {
     final style = pw.TextStyle(
       fontSize: 9,
       fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,

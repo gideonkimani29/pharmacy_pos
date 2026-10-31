@@ -3,7 +3,8 @@ import '../domain/entities/app_user.dart';
 
 abstract final class SettingsStrings {
   static const String title = 'Settings';
-  static const String subtitle = 'Pharmacy details, tax, receipts and who can sign in';
+  static const String subtitle =
+      'Pharmacy details, tax, receipts and who can sign in';
 
   static const String navPharmacy = 'Pharmacy';
   static const String navSales = 'Sales & tax';
@@ -30,7 +31,8 @@ abstract final class SettingsStrings {
   static const String fieldTaxPin = 'KRA PIN';
   static const String taxPinHint = 'Format: A123456789B';
   static const String fieldLicence = 'Pharmacy licence number';
-  static const String licenceHint = 'Your Pharmacy and Poisons Board registration.';
+  static const String licenceHint =
+      'Your Pharmacy and Poisons Board registration.';
 
   // Sales and tax
   static const String salesTitle = 'Sales and tax';
@@ -41,9 +43,11 @@ abstract final class SettingsStrings {
   static const String taxRateHint =
       'Most medicines are VAT-exempt in Kenya. Use 0 if all your products are exempt, and confirm the rate with your accountant.';
   static const String fieldMaxDiscount = 'Largest discount a cashier can give';
-  static const String discountHint = 'Percent of the sale. Bigger discounts need a pharmacist or admin.';
+  static const String discountHint =
+      'Percent of the sale. Bigger discounts need a pharmacist or admin.';
   static const String fieldAllowCredit = 'Allow credit sales';
-  static const String creditHint = 'When off, the Credit sale option is hidden at checkout.';
+  static const String creditHint =
+      'When off, the Credit sale option is hidden at checkout.';
   static const String rxRule =
       'Prescription-only medicines always need a pharmacist check at checkout. This cannot be turned off.';
   static const String notYetApplied =
@@ -64,7 +68,8 @@ abstract final class SettingsStrings {
 
   // Users
   static const String usersTitle = 'Users and roles';
-  static const String usersHint = 'Everyone who can sign in, and what they are allowed to do.';
+  static const String usersHint =
+      'Everyone who can sign in, and what they are allowed to do.';
   static const String addUser = 'Add user';
   static const String editUser = 'Edit user';
   static const String colUser = 'User';
@@ -87,7 +92,8 @@ abstract final class SettingsStrings {
   static String userActivated(String name) => '$name can sign in again.';
   static String userDeactivated(String name) => '$name can no longer sign in.';
 
-  static String printerLabel(PrinterConnection connection) => switch (connection) {
+  static String printerLabel(PrinterConnection connection) =>
+      switch (connection) {
         PrinterConnection.none => 'No printer',
         PrinterConnection.usb => 'USB',
         PrinterConnection.bluetooth => 'Bluetooth',

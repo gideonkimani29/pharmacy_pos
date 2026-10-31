@@ -8,6 +8,7 @@ import '../../../../core/result/result.dart';
 import '../../../../core/utils/money.dart';
 import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
+import '../../domain/entities/sale.dart';
 import '../../domain/entities/sale_type.dart';
 import '../bloc/cart_bloc.dart';
 import '../bloc/product_search_bloc.dart';
@@ -91,7 +92,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return;
     }
 
-    final payments = await PaymentDialog.show(context, totalMinor: state.totals.totalMinor);
+    final payments =
+        await PaymentDialog.show(context, totalMinor: state.totals.totalMinor);
     if (!mounted || payments == null || payments.isEmpty) return;
     cart.add(CartCheckoutSubmitted(payments));
   }
@@ -102,7 +104,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       builder: (dialogContext) => AlertDialog(
         title: const Text(AppStrings.creditConfirmTitle),
         content: Text(
-          AppStrings.creditConfirmBody(Money.format(state.totals.totalMinor), state.customer!.name),
+          AppStrings.creditConfirmBody(
+              Money.format(state.totals.totalMinor), state.customer!.name),
         ),
         actions: [
           TextButton(
@@ -194,7 +197,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         case Ok<AppSettings>(:final value):
           settings = value;
         case Err<AppSettings>(:final failure):
-          _showSnackBar('Receipt settings could not be loaded: ${failure.message}');
+          _showSnackBar(
+              'Receipt settings could not be loaded: ${failure.message}');
       }
 
       if (!mounted) return;
@@ -205,7 +209,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       await SaleCompleteDialog.show(
         this.context,
         receipt: receipt,
-        onPrint: settings == null ? null : () => _printReceipt(state, receipt, settings!),
+        onPrint: settings == null
+            ? null
+            : () => _printReceipt(state, receipt, settings!),
       );
     }
     cart.add(const CartSaleAcknowledged());
@@ -236,16 +242,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
       listeners: [
         BlocListener<ProductSearchBloc, ProductSearchState>(
           listenWhen: (previous, current) =>
-              current.scanOutcome != null && previous.scanOutcome != current.scanOutcome,
+              current.scanOutcome != null &&
+              previous.scanOutcome != current.scanOutcome,
           listener: _onScanOutcome,
         ),
         BlocListener<CartBloc, CartState>(
-          listenWhen: (previous, current) => current.notice != null && previous.notice != current.notice,
+          listenWhen: (previous, current) =>
+              current.notice != null && previous.notice != current.notice,
           listener: (context, state) => _showSnackBar(state.notice!.message),
         ),
         BlocListener<CartBloc, CartState>(
           listenWhen: (previous, current) =>
-              previous.status != current.status && current.status == CartStatus.completed,
+              previous.status != current.status &&
+              current.status == CartStatus.completed,
           listener: _onSaleCompleted,
         ),
       ],

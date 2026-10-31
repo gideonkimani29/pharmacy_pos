@@ -17,7 +17,8 @@ class ReceiptsSection extends StatelessWidget {
     final cubit = context.read<SettingsCubit>();
 
     return BlocBuilder<SettingsCubit, SettingsState>(
-      buildWhen: (previous, current) => previous.formVersion != current.formVersion,
+      buildWhen: (previous, current) =>
+          previous.formVersion != current.formVersion,
       builder: (context, state) {
         final draft = state.draft!;
         return KeyedSubtree(
@@ -28,16 +29,20 @@ class ReceiptsSection extends StatelessWidget {
             children: [
               SettingsFieldGrid(
                 children: [
-                    DropdownButtonFormField<PaperWidth>(
+                  DropdownButtonFormField<PaperWidth>(
                     value: draft.paperWidth,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: SettingsStrings.fieldPaper),
+                    decoration: const InputDecoration(
+                        labelText: SettingsStrings.fieldPaper),
                     items: [
                       for (final width in PaperWidth.values)
-                        DropdownMenuItem(value: width, child: Text(SettingsStrings.paperLabel(width))),
+                        DropdownMenuItem(
+                            value: width,
+                            child: Text(SettingsStrings.paperLabel(width))),
                     ],
                     onChanged: (v) {
-                      if (v != null) cubit.edit((s) => s.copyWith(paperWidth: v));
+                      if (v != null)
+                        cubit.edit((s) => s.copyWith(paperWidth: v));
                     },
                   ),
                   SettingsTextField(
@@ -45,7 +50,8 @@ class ReceiptsSection extends StatelessWidget {
                     label: SettingsStrings.fieldCopies,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (v) => cubit.edit((s) => s.copyWith(receiptCopies: int.tryParse(v) ?? 0)),
+                    onChanged: (v) => cubit.edit(
+                        (s) => s.copyWith(receiptCopies: int.tryParse(v) ?? 0)),
                   ),
                 ],
               ),
@@ -53,12 +59,14 @@ class ReceiptsSection extends StatelessWidget {
               SettingsSwitchRow(
                 initialValue: draft.autoPrintReceipt,
                 title: SettingsStrings.fieldAutoPrint,
-                onChanged: (v) => cubit.edit((s) => s.copyWith(autoPrintReceipt: v)),
+                onChanged: (v) =>
+                    cubit.edit((s) => s.copyWith(autoPrintReceipt: v)),
               ),
               SettingsSwitchRow(
                 initialValue: draft.printPharmacyDetails,
                 title: SettingsStrings.fieldPrintDetails,
-                onChanged: (v) => cubit.edit((s) => s.copyWith(printPharmacyDetails: v)),
+                onChanged: (v) =>
+                    cubit.edit((s) => s.copyWith(printPharmacyDetails: v)),
               ),
               const SizedBox(height: AppDimens.spaceMd),
               SettingsTextField(
@@ -67,7 +75,8 @@ class ReceiptsSection extends StatelessWidget {
                 helperText: SettingsStrings.footerHint,
                 maxLength: SaveSettings.maxFooterLength,
                 maxLines: SettingsLayout.footerLines,
-                onChanged: (v) => cubit.edit((s) => s.copyWith(receiptFooter: v)),
+                onChanged: (v) =>
+                    cubit.edit((s) => s.copyWith(receiptFooter: v)),
               ),
               const SizedBox(height: AppDimens.spaceSm),
               const SettingsNote(message: SettingsStrings.printerNote),

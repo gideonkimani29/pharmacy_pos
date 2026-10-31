@@ -152,134 +152,128 @@ class _PharmacyPosAppState extends State<PharmacyPosApp> {
   }
 
   Widget _authenticatedHome(int taxRateBasisPoints) {
-    return RepositoryProvider<ApiSession>.value(
-      value: _session,
-      child: MultiRepositoryProvider(
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<ProductRepository>(
+            create: (_) => RestProductRepository(_session)),
+        RepositoryProvider<SaleRepository>(
+            create: (_) => RestSaleRepository(_session)),
+        RepositoryProvider<CustomerRepository>(
+            create: (_) => RestCustomerRepository(_session)),
+        RepositoryProvider<DashboardRepository>(
+            create: (_) => RestDashboardRepository(_session)),
+        RepositoryProvider<SupplierRepository>(
+            create: (_) => RestSupplierRepository(_session)),
+        RepositoryProvider<PurchaseRepository>(
+            create: (_) => RestPurchaseRepository(_session)),
+        RepositoryProvider<MedicineRepository>(
+            create: (_) => RestMedicineRepository(_session)),
+        RepositoryProvider<StockRepository>(
+            create: (_) => RestStockRepository(_session)),
+        RepositoryProvider<ReportRepository>(
+            create: (_) => RestReportRepository(_session)),
+        RepositoryProvider<SettingsRepository>(
+            create: (_) => RestSettingsRepository(_session)),
+        RepositoryProvider<UserRepository>(
+            create: (_) => RestUserRepository(_session)),
+        RepositoryProvider<CustomerAccountRepository>(
+            create: (_) => RestCustomerAccountRepository(_session)),
+      ],
+      child: MultiBlocProvider(
         providers: [
-          RepositoryProvider<ProductRepository>(
-              create: (_) => RestProductRepository(_session)),
-          RepositoryProvider<SaleRepository>(
-              create: (_) => RestSaleRepository(_session)),
-          RepositoryProvider<CustomerRepository>(
-              create: (_) => RestCustomerRepository(_session)),
-          RepositoryProvider<DashboardRepository>(
-              create: (_) => RestDashboardRepository(_session)),
-          RepositoryProvider<SupplierRepository>(
-              create: (_) => RestSupplierRepository(_session)),
-          RepositoryProvider<PurchaseRepository>(
-              create: (_) => RestPurchaseRepository(_session)),
-          RepositoryProvider<MedicineRepository>(
-              create: (_) => RestMedicineRepository(_session)),
-          RepositoryProvider<StockRepository>(
-              create: (_) => RestStockRepository(_session)),
-          RepositoryProvider<ReportRepository>(
-              create: (_) => RestReportRepository(_session)),
-          RepositoryProvider<SettingsRepository>(
-              create: (_) => RestSettingsRepository(_session)),
-          RepositoryProvider<UserRepository>(
-              create: (_) => RestUserRepository(_session)),
-          RepositoryProvider<CustomerAccountRepository>(
-              create: (_) => RestCustomerAccountRepository(_session)),
-        ],
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider<ProductSearchBloc>(
-              create: (context) => ProductSearchBloc(
-                searchProducts:
-                    SearchProducts(context.read<ProductRepository>()),
-                findProductByBarcode:
-                    FindProductByBarcode(context.read<ProductRepository>()),
-              ),
+          BlocProvider<ProductSearchBloc>(
+            create: (context) => ProductSearchBloc(
+              searchProducts: SearchProducts(context.read<ProductRepository>()),
+              findProductByBarcode:
+                  FindProductByBarcode(context.read<ProductRepository>()),
             ),
-            BlocProvider<CartBloc>(
-              create: (context) => CartBloc(
-                submitSale: SubmitSale(context.read<SaleRepository>()),
-                taxRateBasisPoints: taxRateBasisPoints,
-              ),
-            ),
-            BlocProvider<CustomersCubit>(
-              create: (context) => CustomersCubit(
-                  getCustomers:
-                      GetCustomers(context.read<CustomerRepository>()))
-                ..load(),
-            ),
-            BlocProvider<DashboardCubit>(
-              create: (context) => DashboardCubit(
-                getDashboardSummary:
-                    GetDashboardSummary(context.read<DashboardRepository>()),
-              ),
-            ),
-            BlocProvider<PurchasesCubit>(
-              create: (context) => PurchasesCubit(
-                  getPurchases:
-                      GetPurchases(context.read<PurchaseRepository>())),
-            ),
-            BlocProvider<MedicinesCubit>(
-              create: (context) {
-                final repository = context.read<MedicineRepository>();
-                return MedicinesCubit(
-                  getMedicines: GetMedicines(repository),
-                  saveMedicine: SaveMedicine(repository),
-                  setMedicineActive: SetMedicineActive(repository),
-                );
-              },
-            ),
-            BlocProvider<StockCubit>(
-              create: (context) {
-                final repository = context.read<StockRepository>();
-                return StockCubit(
-                  getStockBatches: GetStockBatches(repository),
-                  adjustStock: AdjustStock(repository),
-                );
-              },
-            ),
-            BlocProvider<CustomerAccountsCubit>(
-              create: (context) {
-                final repository = context.read<CustomerAccountRepository>();
-                return CustomerAccountsCubit(
-                  getCustomerAccounts: GetCustomerAccounts(repository),
-                  saveCustomerAccount: SaveCustomerAccount(repository),
-                  setCustomerActive: SetCustomerActive(repository),
-                  receiveAccountPayment: ReceiveAccountPayment(repository),
-                );
-              },
-            ),
-            BlocProvider<ReportsCubit>(
-              create: (context) {
-                final repository = context.read<ReportRepository>();
-                return ReportsCubit(
-                  getSalesReport: GetSalesReport(repository),
-                  getProfitReport: GetProfitReport(repository),
-                  getLossesReport: GetLossesReport(repository),
-                );
-              },
-            ),
-            BlocProvider<SettingsCubit>(
-              create: (context) {
-                final settings = context.read<SettingsRepository>();
-                final users = context.read<UserRepository>();
-                return SettingsCubit(
-                  getSettings: GetSettings(settings),
-                  saveSettings: SaveSettings(settings),
-                  getUsers: GetUsers(users),
-                  saveUser: SaveUser(users),
-                  setUserActive: SetUserActive(users),
-                );
-              },
-            ),
-          ],
-          child: BlocListener<SettingsCubit, SettingsState>(
-            listenWhen: (previous, current) =>
-                previous.saved?.taxRateBasisPoints !=
-                current.saved?.taxRateBasisPoints,
-            listener: (context, state) {
-              final rate = state.saved?.taxRateBasisPoints;
-              if (rate != null) {
-                context.read<CartBloc>().add(CartTaxRateChanged(rate));
-              }
-            },
-            child: AppShell(onLogout: _logout),
           ),
+          BlocProvider<CartBloc>(
+            create: (context) => CartBloc(
+              submitSale: SubmitSale(context.read<SaleRepository>()),
+              taxRateBasisPoints: taxRateBasisPoints,
+            ),
+          ),
+          BlocProvider<CustomersCubit>(
+            create: (context) => CustomersCubit(
+                getCustomers: GetCustomers(context.read<CustomerRepository>()))
+              ..load(),
+          ),
+          BlocProvider<DashboardCubit>(
+            create: (context) => DashboardCubit(
+              getDashboardSummary:
+                  GetDashboardSummary(context.read<DashboardRepository>()),
+            ),
+          ),
+          BlocProvider<PurchasesCubit>(
+            create: (context) => PurchasesCubit(
+                getPurchases: GetPurchases(context.read<PurchaseRepository>())),
+          ),
+          BlocProvider<MedicinesCubit>(
+            create: (context) {
+              final repository = context.read<MedicineRepository>();
+              return MedicinesCubit(
+                getMedicines: GetMedicines(repository),
+                saveMedicine: SaveMedicine(repository),
+                setMedicineActive: SetMedicineActive(repository),
+              );
+            },
+          ),
+          BlocProvider<StockCubit>(
+            create: (context) {
+              final repository = context.read<StockRepository>();
+              return StockCubit(
+                getStockBatches: GetStockBatches(repository),
+                adjustStock: AdjustStock(repository),
+              );
+            },
+          ),
+          BlocProvider<CustomerAccountsCubit>(
+            create: (context) {
+              final repository = context.read<CustomerAccountRepository>();
+              return CustomerAccountsCubit(
+                getCustomerAccounts: GetCustomerAccounts(repository),
+                saveCustomerAccount: SaveCustomerAccount(repository),
+                setCustomerActive: SetCustomerActive(repository),
+                receiveAccountPayment: ReceiveAccountPayment(repository),
+              );
+            },
+          ),
+          BlocProvider<ReportsCubit>(
+            create: (context) {
+              final repository = context.read<ReportRepository>();
+              return ReportsCubit(
+                getSalesReport: GetSalesReport(repository),
+                getProfitReport: GetProfitReport(repository),
+                getLossesReport: GetLossesReport(repository),
+              );
+            },
+          ),
+          BlocProvider<SettingsCubit>(
+            create: (context) {
+              final settings = context.read<SettingsRepository>();
+              final users = context.read<UserRepository>();
+              return SettingsCubit(
+                getSettings: GetSettings(settings),
+                saveSettings: SaveSettings(settings),
+                getUsers: GetUsers(users),
+                saveUser: SaveUser(users),
+                setUserActive: SetUserActive(users),
+              );
+            },
+          ),
+        ],
+        child: BlocListener<SettingsCubit, SettingsState>(
+          listenWhen: (previous, current) =>
+              previous.saved?.taxRateBasisPoints !=
+              current.saved?.taxRateBasisPoints,
+          listener: (context, state) {
+            final rate = state.saved?.taxRateBasisPoints;
+            if (rate != null) {
+              context.read<CartBloc>().add(CartTaxRateChanged(rate));
+            }
+          },
+          child: AppShell(onLogout: _logout),
         ),
       ),
     );

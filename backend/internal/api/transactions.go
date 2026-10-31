@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
@@ -242,7 +241,8 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		type allocation struct {
-			id, quantity, cost int64
+			id                string
+			quantity, cost    int64
 		}
 		allocations := make([]allocation, 0)
 		for rows.Next() && remaining > 0 {
@@ -486,7 +486,12 @@ func (s *Server) recordPurchase(w http.ResponseWriter, r *http.Request) {
 		}
 		expiry := ""
 		if line.ExpiryDate != nil {
-			expiry, _ = parseDate(*line.ExpiryDate).Format("2006-01-02"), err
+			expiryDate, parseErr := parseDate(*line.ExpiryDate)
+			if parseErr != nil {
+				writeError(w, http.StatusBadRequest, "validation_error", "expiryDate must be an ISO-8601 date.", nil)
+				return
+			}
+			expiry = expiryDate.Format("2006-01-02")
 		} else {
 			expiry = "9999-12-31"
 		}

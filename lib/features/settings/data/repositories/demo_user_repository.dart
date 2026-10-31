@@ -4,12 +4,8 @@ import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../../domain/settings_messages.dart';
 
-/// In-memory users so the module can be built before the Go API exists.
-/// Replace with a REST-backed repository.
 class DemoUserRepository implements UserRepository {
-  DemoUserRepository({DateTime Function()? clock}) {
-    _items.addAll(_seed((clock ?? DateTime.now)()));
-  }
+  DemoUserRepository({List<AppUser> users = const []}) : _items = [...users];
 
   static const Duration _latency = Duration(milliseconds: 250);
   static const String _idPrefix = 'u';
@@ -88,15 +84,4 @@ class DemoUserRepository implements UserRepository {
   bool _emailTaken(String email, {required String? exceptId}) =>
       _items.any((u) => u.id != exceptId && u.email.toLowerCase() == email.toLowerCase());
 
-  static List<AppUser> _seed(DateTime now) {
-    final today = DateTime(now.year, now.month, now.day);
-    DateTime ago(int days) => today.subtract(Duration(days: days));
-
-    return [
-      AppUser(id: 'u1', name: 'Alex Admin', email: 'alex.admin@demopharmacy.example', phone: '+254700000201', role: UserRole.admin, isActive: true, lastSignInAt: ago(0)),
-      AppUser(id: 'u2', name: 'Pat Pharmacist', email: 'pat.pharmacist@demopharmacy.example', phone: '+254700000202', role: UserRole.pharmacist, isActive: true, lastSignInAt: ago(1)),
-      AppUser(id: 'u3', name: 'Casey Cashier', email: 'casey.cashier@demopharmacy.example', phone: '', role: UserRole.cashier, isActive: true, lastSignInAt: ago(0)),
-      AppUser(id: 'u4', name: 'Sam Former', email: 'sam.former@demopharmacy.example', phone: '', role: UserRole.cashier, isActive: false, lastSignInAt: ago(120)),
-    ];
-  }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pharmacy_pos/core/result/result.dart';
-import 'package:pharmacy_pos/features/reports/data/repositories/demo_report_repository.dart';
 import 'package:pharmacy_pos/features/reports/domain/entities/losses_report.dart';
 import 'package:pharmacy_pos/features/reports/domain/entities/profit_report.dart';
 import 'package:pharmacy_pos/features/reports/domain/entities/report_range.dart';
 import 'package:pharmacy_pos/features/reports/domain/entities/sales_report.dart';
+import 'package:pharmacy_pos/features/reports/domain/repositories/report_repository.dart';
 import 'package:pharmacy_pos/features/reports/domain/report_messages.dart';
 import 'package:pharmacy_pos/features/reports/domain/usecases/get_losses_report.dart';
 import 'package:pharmacy_pos/features/reports/domain/usecases/get_profit_report.dart';
@@ -15,7 +15,80 @@ import 'package:pharmacy_pos/features/reports/presentation/report_format.dart';
 
 final DateTime _now = DateTime(2026, 10, 6, 14, 30);
 
-DemoReportRepository _repository() => DemoReportRepository(clock: () => _now);
+ReportRepository _repository() => _ReportRepositoryFixture(_now);
+
+class _ReportRepositoryFixture implements ReportRepository {
+  const _ReportRepositoryFixture(this.now);
+
+  final DateTime now;
+
+  @override
+  Future<Result<SalesReport>> sales(ReportRange range) async {
+    final days = [
+      for (var i = 0; i < range.dayCount; i++)
+        DailySalesRow(
+          date: range.dayAt(i),
+          transactions: 20 + i % 3,
+          itemsSold: 60 + i,
+          grossMinor: 100000 + i * 1000,
+          discountMinor: i % 4 * 100,
+        ),
+    ];
+    final net = days.fold(0, (sum, day) => sum + day.netMinor);
+    return Ok(SalesReport(
+      range: range,
+      days: days,
+      byPayment: [
+        PaymentTotal(method: ReportPayment.cash, amountMinor: net),
+        const PaymentTotal(method: ReportPayment.mobile, amountMinor: 0),
+        const PaymentTotal(method: ReportPayment.card, amountMinor: 0),
+        const PaymentTotal(method: ReportPayment.credit, amountMinor: 0),
+      ],
+    ));
+  }
+
+  @override
+  Future<Result<ProfitReport>> profit(ReportRange range) async {
+    final revenue = (await sales(range) as Ok<SalesReport>).value.netMinor;
+    return Ok(ProfitReport(
+      range: range,
+      products: [
+        ProductProfit(
+          name: 'Test product',
+          unitsSold: 1,
+          revenueMinor: revenue,
+          costMinor: revenue ~/ 2,
+        ),
+      ],
+    ));
+  }
+
+  @override
+  Future<Result<LossesReport>> losses(ReportRange range) async {
+    final today = DateTime(now.year, now.month, now.day);
+    final events = [
+      (3, 'Test expired medicine', 'TEST-1', 14, 8000, LossReason.expired),
+      (10, 'Test damaged medicine', 'TEST-2', 2, 36000, LossReason.damaged),
+      (15, 'Test expired medicine', 'TEST-3', 60, 16500, LossReason.expired),
+      (20, 'Test counted medicine', 'TEST-4', 5, 2000, LossReason.countShortage),
+      (40, 'Older test medicine', 'TEST-5', 8, 30000, LossReason.damaged),
+      (75, 'Older test medicine', 'TEST-6', 12, 21000, LossReason.expired),
+    ];
+    final rows = [
+      for (final event in events)
+        if (range.contains(today.subtract(Duration(days: event.$1))))
+          LossRow(
+            date: today.subtract(Duration(days: event.$1)),
+            medicineName: event.$2,
+            batchNumber: event.$3,
+            quantity: event.$4,
+            unitCostMinor: event.$5,
+            reason: event.$6,
+          ),
+    ]..sort((a, b) => b.date.compareTo(a.date));
+    return Ok(LossesReport(range: range, rows: rows));
+  }
+}
 
 ReportsCubit _cubit() {
   final repository = _repository();
@@ -62,7 +135,7 @@ void main() {
     });
   });
 
-  group('demo reports agree with each other', () {
+  group('report fixtures agree with each other', () {
     final range = ReportRange(from: DateTime(2026, 9, 7), to: DateTime(2026, 10, 6));
 
     test('sales: one row per day, net is gross minus discount, payments add up to net', () async {

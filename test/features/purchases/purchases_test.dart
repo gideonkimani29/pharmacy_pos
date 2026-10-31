@@ -6,6 +6,7 @@ import 'package:pharmacy_pos/features/checkout/domain/usecases/search_products.d
 import 'package:pharmacy_pos/features/purchases/data/repositories/demo_purchase_repository.dart';
 import 'package:pharmacy_pos/features/purchases/data/repositories/demo_supplier_repository.dart';
 import 'package:pharmacy_pos/features/purchases/domain/entities/purchase.dart';
+import 'package:pharmacy_pos/features/purchases/domain/entities/supplier.dart';
 import 'package:pharmacy_pos/features/purchases/domain/purchase_messages.dart';
 import 'package:pharmacy_pos/features/purchases/domain/usecases/get_suppliers.dart';
 import 'package:pharmacy_pos/features/purchases/domain/usecases/record_purchase.dart';

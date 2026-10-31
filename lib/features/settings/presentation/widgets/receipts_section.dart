@@ -70,7 +70,7 @@ class ReceiptsSection extends StatelessWidget {
                 onChanged: (v) => cubit.edit((s) => s.copyWith(receiptFooter: v)),
               ),
               const SizedBox(height: AppDimens.spaceSm),
-              const SettingsNote(message: SettingsStrings.printerNote, warning: true),
+              const SettingsNote(message: SettingsStrings.printerNote),
             ],
           ),
         );

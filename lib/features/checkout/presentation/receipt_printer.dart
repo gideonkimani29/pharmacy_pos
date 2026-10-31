@@ -4,10 +4,10 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-import '../../../../core/utils/money.dart';
-import '../../../settings/domain/entities/app_settings.dart';
+import '../../../core/utils/money.dart';
+import '../../settings/domain/entities/app_settings.dart';
 import '../domain/entities/sale.dart';
-import '../presentation/bloc/cart_bloc.dart';
+import 'bloc/cart_bloc.dart';
 
 abstract final class ReceiptPrinter {
   static Future<bool> printReceipt({

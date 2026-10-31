@@ -90,14 +90,14 @@ void main() {
     test(
         'uses the configured tax rate for checkout and retains it after clearing',
         () async {
-      final bloc = CartBloc(
-        submitSale: SubmitSale(DemoSaleRepository()),
-        clock: () => now,
-        taxRateBasisPoints: 1600,
-      );
+      final bloc = buildBloc();
       bloc.add(CartProductAdded(product()));
       await bloc.stream.firstWhere((s) => !s.isEmpty);
+      final oldKey = bloc.state.idempotencyKey;
+      bloc.add(const CartTaxRateChanged(1600));
+      await bloc.stream.firstWhere((s) => s.taxRateBasisPoints == 1600);
       expect(bloc.state.totals.totalMinor, 11600);
+      expect(bloc.state.idempotencyKey, isNot(oldKey));
 
       bloc.add(const CartCheckoutSubmitted([
         PaymentLine(method: PaymentMethod.cash, amountMinor: 11600),

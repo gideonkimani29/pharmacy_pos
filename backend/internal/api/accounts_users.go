@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type customerAccountDTO struct {
@@ -52,10 +54,10 @@ func (s *Server) listCustomerAccounts(w http.ResponseWriter, r *http.Request) {
 }
 
 type customerDraft struct {
-	Name            string `json:"name"`
-	Phone           string `json:"phone"`
-	Email           string `json:"email"`
-	CreditLimitMinor int64 `json:"creditLimitMinor"`
+	Name             string `json:"name"`
+	Phone            string `json:"phone"`
+	Email            string `json:"email"`
+	CreditLimitMinor int64  `json:"creditLimitMinor"`
 }
 
 func validCustomerDraft(input customerDraft) bool {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
@@ -12,19 +13,19 @@ import (
 )
 
 type saleInput struct {
-	SaleType            string        `json:"saleType"`
-	CustomerID          *string       `json:"customerId"`
-	Lines               []saleLineIn  `json:"lines"`
-	Payments            []paymentIn   `json:"payments"`
-	PrescriptionVerified bool          `json:"prescriptionVerified"`
-	DiscountMinor       int64         `json:"discountMinor"`
-	ExpectedTotalMinor  int64         `json:"expectedTotalMinor"`
+	SaleType             string       `json:"saleType"`
+	CustomerID           *string      `json:"customerId"`
+	Lines                []saleLineIn `json:"lines"`
+	Payments             []paymentIn  `json:"payments"`
+	PrescriptionVerified bool         `json:"prescriptionVerified"`
+	DiscountMinor        int64        `json:"discountMinor"`
+	ExpectedTotalMinor   int64        `json:"expectedTotalMinor"`
 }
 
 type saleLineIn struct {
-	ProductID     string `json:"productId"`
-	Quantity      int64  `json:"quantity"`
-	UnitPriceMinor int64 `json:"unitPriceMinor"`
+	ProductID      string `json:"productId"`
+	Quantity       int64  `json:"quantity"`
+	UnitPriceMinor int64  `json:"unitPriceMinor"`
 }
 
 type paymentIn struct {
@@ -39,10 +40,6 @@ type saleReceiptDTO struct {
 	ChangeDueMinor       int64  `json:"changeDueMinor"`
 	AmountOnAccountMinor int64  `json:"amountOnAccountMinor"`
 	CompletedAt          string `json:"completedAt"`
-}
-
-type saleLookup interface {
-	QueryRowContext(context.Context, string, ...any) *sql.Row
 }
 
 func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
@@ -110,10 +107,10 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type checkedLine struct {
-		id          string
-		price       int64
-		requiresRx  bool
-		quantity    int64
+		id         string
+		price      int64
+		requiresRx bool
+		quantity   int64
 	}
 	checked := make([]checkedLine, 0, len(input.Lines))
 	var subtotal int64
@@ -340,21 +337,21 @@ func requestHash(value any) (string, error) {
 }
 
 type purchaseInput struct {
-	SupplierID    *string         `json:"supplierId"`
-	InvoiceNumber string          `json:"invoiceNumber"`
-	ReceivedOn    string          `json:"receivedOn"`
-	PaymentStatus string          `json:"paymentStatus"`
+	SupplierID    *string          `json:"supplierId"`
+	InvoiceNumber string           `json:"invoiceNumber"`
+	ReceivedOn    string           `json:"receivedOn"`
+	PaymentStatus string           `json:"paymentStatus"`
 	Lines         []purchaseLineIn `json:"lines"`
 }
 
 type purchaseLineIn struct {
-	ProductID        string  `json:"productId"`
-	ProductName      string  `json:"productName"`
-	BatchNumber      string  `json:"batchNumber"`
-	ExpiryDate       *string `json:"expiryDate"`
-	Quantity         int64   `json:"quantity"`
-	UnitCostMinor    int64   `json:"unitCostMinor"`
-	SellingPriceMinor int64  `json:"sellingPriceMinor"`
+	ProductID         string  `json:"productId"`
+	ProductName       string  `json:"productName"`
+	BatchNumber       string  `json:"batchNumber"`
+	ExpiryDate        *string `json:"expiryDate"`
+	Quantity          int64   `json:"quantity"`
+	UnitCostMinor     int64   `json:"unitCostMinor"`
+	SellingPriceMinor int64   `json:"sellingPriceMinor"`
 }
 
 type purchaseDTO struct {
@@ -550,5 +547,3 @@ func (s *Server) listPurchases(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, items)
 }
-
-var _ = saleLookup(nil)

@@ -254,18 +254,18 @@ func (s *Server) setMedicineActive(w http.ResponseWriter, r *http.Request) {
 }
 
 type batchDTO struct {
-	ID                 string `json:"id"`
-	MedicineID         string `json:"medicineId"`
-	MedicineName       string `json:"medicineName"`
-	BatchNumber        string `json:"batchNumber"`
-	SupplierName       string `json:"supplierName"`
-	ReceivedOn         string `json:"receivedOn"`
-	ExpiryDate         string `json:"expiryDate"`
-	QuantityReceived   int64  `json:"quantityReceived"`
-	QuantityOnHand     int64  `json:"quantityOnHand"`
-	UnitCostMinor      int64  `json:"unitCostMinor"`
-	SellingPriceMinor  int64  `json:"sellingPriceMinor"`
-	ReorderLevel       int64  `json:"reorderLevel"`
+	ID                string `json:"id"`
+	MedicineID        string `json:"medicineId"`
+	MedicineName      string `json:"medicineName"`
+	BatchNumber       string `json:"batchNumber"`
+	SupplierName      string `json:"supplierName"`
+	ReceivedOn        string `json:"receivedOn"`
+	ExpiryDate        string `json:"expiryDate"`
+	QuantityReceived  int64  `json:"quantityReceived"`
+	QuantityOnHand    int64  `json:"quantityOnHand"`
+	UnitCostMinor     int64  `json:"unitCostMinor"`
+	SellingPriceMinor int64  `json:"sellingPriceMinor"`
+	ReorderLevel      int64  `json:"reorderLevel"`
 }
 
 func (s *Server) listBatches(w http.ResponseWriter, r *http.Request) {

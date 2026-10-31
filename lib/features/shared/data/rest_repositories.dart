@@ -326,7 +326,10 @@ class RestMedicineRepository extends ApiRepository implements MedicineRepository
   Future<Result<Medicine>> setActive(String id, {required bool active}) => run(() async {
         await api.patch('medicines/${Uri.encodeComponent(id)}/active', body: {'active': active});
         final medicines = _objects(await api.get('medicines')).map(_medicine);
-        return medicines.firstWhere((medicine) => medicine.id == id);
+        for (final medicine in medicines) {
+          if (medicine.id == id) return medicine;
+        }
+        throw const FormatException('The API did not return the updated medicine.');
       });
 
   Map<String, Object?> _medicineDraft(MedicineDraft draft) => {
@@ -362,7 +365,10 @@ class RestStockRepository extends ApiRepository implements StockRepository {
           },
         );
         final batches = _objects(await api.get('stock/batches')).map(_batch);
-        return batches.firstWhere((batch) => batch.id == draft.batchId);
+        for (final batch in batches) {
+          if (batch.id == draft.batchId) return batch;
+        }
+        throw const FormatException('The API did not return the adjusted stock batch.');
       });
 
   String _stockReason(StockAdjustmentReason reason) => switch (reason) {

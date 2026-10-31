@@ -11,7 +11,7 @@ class DemoUserRepository implements UserRepository {
   static const String _idPrefix = 'u';
   static const int _firstNewId = 100;
 
-  final List<AppUser> _items = [];
+  final List<AppUser> _items;
   int _counter = _firstNewId;
 
   @override

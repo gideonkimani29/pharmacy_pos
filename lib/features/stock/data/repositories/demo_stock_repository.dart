@@ -9,7 +9,7 @@ class DemoStockRepository implements StockRepository {
 
   static const Duration _latency = Duration(milliseconds: 250);
 
-  final List<StockBatch> _batches = [];
+  final List<StockBatch> _batches;
 
   @override
   Future<Result<List<StockBatch>>> list() async {

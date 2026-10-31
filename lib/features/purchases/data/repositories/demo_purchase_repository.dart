@@ -16,7 +16,7 @@ class DemoPurchaseRepository implements PurchaseRepository {
   static const int _referenceDigits = 4;
   static const int _firstNewNumber = 1;
 
-  final List<Purchase> _purchases = [];
+  final List<Purchase> _purchases;
   final List<Supplier> _suppliers;
   final Map<String, Purchase> _byKey = {};
   int _counter = _firstNewNumber;

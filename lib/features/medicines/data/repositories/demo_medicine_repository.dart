@@ -11,7 +11,7 @@ class DemoMedicineRepository implements MedicineRepository {
   static const String _idPrefix = 'm';
   static const int _firstNewId = 100;
 
-  final List<Medicine> _items = [];
+  final List<Medicine> _items;
   int _counter = _firstNewId;
 
   @override

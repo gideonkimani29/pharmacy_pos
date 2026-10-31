@@ -11,7 +11,7 @@ class DemoCustomerAccountRepository implements CustomerAccountRepository {
   static const String _idPrefix = 'c';
   static const int _firstNewId = 100;
 
-  final List<CustomerAccount> _items = [];
+  final List<CustomerAccount> _items;
   int _counter = _firstNewId;
 
   @override

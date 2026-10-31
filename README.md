@@ -35,6 +35,21 @@ flutter run -d windows     # or: linux, macos, chrome
 On Windows, desktop builds need Visual Studio with the "Desktop development with C++" workload
 (`flutter doctor` tells you what is missing).
 
+## Go backend
+
+The Go REST API is in `backend\` and uses SQLite. Start it in PowerShell:
+
+```powershell
+Set-Location .\backend
+$env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+go run .\cmd\pharmacy-api
+```
+
+Then create the first admin with `POST http://127.0.0.1:8080/api/v1/auth/bootstrap`. Full API routes,
+authentication, database configuration, and Flutter host/emulator URLs are documented in
+[`instruction.md`](instruction.md). The Flutter UI is not yet wired to these endpoints and still uses
+demo repositories.
+
 ## Build
 
 ```bash

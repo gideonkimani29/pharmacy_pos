@@ -241,8 +241,8 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		type allocation struct {
-			id                string
-			quantity, cost    int64
+			id             string
+			quantity, cost int64
 		}
 		allocations := make([]allocation, 0)
 		for rows.Next() && remaining > 0 {

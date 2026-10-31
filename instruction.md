@@ -1,12 +1,12 @@
 # Go Backend Integration Instructions
 
-This Flutter POS currently uses in-memory `Demo*Repository` classes. The Go API is not included in this repository, so the paths and conventions below are a **proposed contract** for the backend and Flutter client to agree on before wiring real repositories.
+This repository now includes a Go REST API in `backend\`. The Flutter app still uses in-memory `Demo*Repository` classes; implementing Flutter's HTTP repositories and switching the composition root is a separate remaining integration step. API paths below describe the current service.
 
 ## 1. Agree on the API contract
 
 Use JSON over HTTPS in production, with a versioned prefix such as `/api/v1`. Keep request/response field names stable and document each endpoint. All money values should be integer minor units (for example, `1250` means 12.50 in a two-decimal currency); do not use floating-point amounts.
 
-| Flutter repository operation | Suggested endpoint |
+| Flutter repository operation | Endpoint |
 |---|---|
 | Search products / find barcode | `GET /products?query=...` / `GET /products/barcode/{barcode}` |
 | Submit sale | `POST /sales` |
@@ -16,16 +16,40 @@ Use JSON over HTTPS in production, with a versioned prefix such as `/api/v1`. Ke
 | List/adjust stock | `GET /stock/batches`; `POST /stock/adjustments` |
 | List/create/update/activate customer accounts | `GET, POST /customer-accounts`; `PUT /customer-accounts/{id}`; `PATCH /customer-accounts/{id}/active` |
 | Receive account payment | `POST /customer-account-payments` |
-| List suppliers and purchases / record purchase | `GET /suppliers`; `GET, POST /purchases` |
+| List/create suppliers and purchases / record purchase | `GET, POST /suppliers`; `GET, POST /purchases` |
 | Sales, profit, and losses reports | `GET /reports/sales`; `GET /reports/profit`; `GET /reports/losses` |
 | Load/save pharmacy settings | `GET, PUT /settings` |
 | List/create/update/activate users | `GET, POST /users`; `PUT /users/{id}`; `PATCH /users/{id}/active` |
 
-Add endpoints for sales-return lookup and stock reversal when implementing the Returns tab. Use server-side authorization for every endpoint; client-side role checks are not a security boundary.
+Sales-return lookup and stock reversal are not implemented because the Flutter Returns tab does not yet have a domain repository. Use server-side authorization for every endpoint; client-side role checks are not a security boundary.
 
-## 2. Standardize authentication and errors
+## 2. Run the Go backend
 
-Recommended authenticated request header:
+Requires Go 1.27 or newer. From the repository root in PowerShell:
+
+```powershell
+Set-Location .\backend
+$env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$env:DATABASE_PATH = "..\data\pharmacy.db"
+$env:CORS_ORIGINS = "http://localhost:5000,http://localhost:3000"
+go run .\cmd\pharmacy-api
+```
+
+The service listens on `:8080` by default, creates the SQLite directory/database, applies schema migrations at startup, and exposes `GET /health`. Keep the `JWT_SECRET` stable across restarts and private; use a secret manager for deployment. The default database path is `backend\data\pharmacy.db`.
+
+Create the first administrator once:
+
+```powershell
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8080/api/v1/auth/bootstrap `
+  -ContentType "application/json" `
+  -Body '{"name":"Pharmacy Admin","email":"admin@example.com","phone":"","password":"replace-with-a-long-unique-password"}'
+```
+
+Bootstrap is disabled as soon as any user exists. Keep the returned access/refresh tokens private.
+
+## 3. Authentication and errors
+
+Authenticated request header:
 
 ```http
 Authorization: Bearer <access-token>
@@ -33,7 +57,9 @@ Accept: application/json
 Content-Type: application/json
 ```
 
-Decide the login/refresh endpoints and token lifecycle with the backend owner before implementing token storage. Never embed a database credential or signing secret in the Flutter app.
+Use `POST /api/v1/auth/login` with `{ "email": "...", "password": "..." }`. Access tokens expire after 15 minutes; refresh tokens expire after 30 days and rotate on `POST /api/v1/auth/refresh`. Send the returned refresh token to `POST /api/v1/auth/logout` to revoke it. Admin-created users receive a one-time `invitationToken` in the `POST /api/v1/users` response; after delivering it securely, the user calls `POST /api/v1/auth/accept-invitation` with `{ "token": "...", "password": "..." }`. This API returns the invitation token but does not send email.
+
+Never embed a database credential or signing secret in the Flutter app.
 
 Return non-2xx status codes for errors, with a consistent JSON shape, for example:
 
@@ -49,7 +75,7 @@ Return non-2xx status codes for errors, with a consistent JSON shape, for exampl
 
 The client should map connection/time-out failures to `NetworkFailure`, HTTP 401/403 to `UnauthorizedFailure`, validation/conflict responses to `ValidationFailure`, and malformed or unexpected responses to `UnexpectedFailure`.
 
-## 3. Preserve POS transaction guarantees
+## 4. Preserve POS transaction guarantees
 
 - Require `Idempotency-Key` on `POST /sales` and `POST /purchases`. Store the key with the result and return the original result for a retry; reject reuse of the key with a different payload.
 - Submit `expectedTotalMinor` with sales and reject stale prices. The backend must compute the authoritative total and allocate stock by FEFO.
@@ -85,9 +111,9 @@ Example sale request shape (field names must be agreed with the Go API):
 
 The idempotency key belongs in the request header, not in place of server-side idempotency storage.
 
-## 4. Configure and run the API
+## 5. Configure and run the API
 
-1. Start the Go service and database using the backend project's own instructions.
+1. Start the Go service using the command above.
 2. Verify its health endpoint (for example, `GET /health`) from the same machine/network as the Flutter client.
 3. Configure CORS for the actual development origin when running Flutter Web. Do not use wildcard origins with credentials in production.
 4. Use a reachable host address, not automatically `localhost`, when the client runs on another device or emulator.
@@ -110,7 +136,7 @@ flutter run -d windows --dart-define=API_BASE_URL=http://127.0.0.1:8080/api/v1
 
 Use the corresponding target address above for emulator/device runs. Production builds should use the deployed HTTPS API URL.
 
-## 5. Wire Flutter without changing the UI layer
+## 6. Wire Flutter without changing the UI layer
 
 The app already defines domain repository interfaces under each feature's `domain/repositories` directory. Add REST-backed implementations under the matching `data/repositories` directory, plus a shared HTTP client and request/response DTOs. Keep JSON parsing and HTTP concerns in the data layer; map responses into existing domain entities and map transport/API errors into the existing `Failure` types.
 
@@ -123,6 +149,6 @@ flutter analyze
 flutter test
 ```
 
-## 6. Confirm before implementation
+## 7. Remaining Flutter work and limitations
 
-This document is a proposal, not a description of a running backend. Before creating the REST repositories, confirm the actual API base URL, endpoint paths, JSON field names/enums, authentication and token refresh design, error format, pagination, CORS origins, and which modules/endpoints are implemented. Update this document to match the agreed Go API contract.
+The backend contract is implemented but has not yet been connected to Flutter. Implement a shared configured HTTP client, secure token persistence, error mapping, data-transfer objects, and all repository adapters before replacing the `Demo*Repository` registrations. Confirm the deployment API URL and the intended token-storage strategy for each supported Flutter platform first. There is no returns workflow yet; suppliers can be added directly through the backend API although the Flutter app currently has no supplier-management screen.

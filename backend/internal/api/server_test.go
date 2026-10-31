@@ -152,8 +152,8 @@ func TestSaleIdempotencyAndAtomicStock(t *testing.T) {
 	}
 	body := map[string]any{
 		"saleType": "cash", "customerId": nil,
-		"lines": []map[string]any{{"productId": "med-1", "quantity": 2, "unitPriceMinor": 1250}},
-		"payments": []map[string]any{{"method": "cash", "amountMinor": 2600}},
+		"lines":                []map[string]any{{"productId": "med-1", "quantity": 2, "unitPriceMinor": 1250}},
+		"payments":             []map[string]any{{"method": "cash", "amountMinor": 2600}},
 		"prescriptionVerified": false, "discountMinor": 0, "expectedTotalMinor": 2500,
 	}
 	postSale := func(total int64) *http.Response {

@@ -237,6 +237,39 @@ func (s *Server) listSuppliers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, items)
 }
 
+func (s *Server) createSupplier(w http.ResponseWriter, r *http.Request) {
+	if !s.requireRole(w, r, "admin", "pharmacist") {
+		return
+	}
+	var input struct {
+		Name  string  `json:"name"`
+		Phone *string `json:"phone"`
+	}
+	if !decodeJSON(w, r, &input) {
+		return
+	}
+	input.Name = strings.TrimSpace(input.Name)
+	if input.Name == "" {
+		writeError(w, http.StatusBadRequest, "validation_error", "Supplier name is required.", nil)
+		return
+	}
+	id, err := randomID()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not create supplier.", nil)
+		return
+	}
+	if input.Phone != nil {
+		phone := strings.TrimSpace(*input.Phone)
+		input.Phone = &phone
+	}
+	if _, err := s.db.ExecContext(r.Context(), `INSERT INTO suppliers (id, name, phone) VALUES (?, ?, ?)`,
+		id, input.Name, input.Phone); err != nil {
+		writeDatabaseError(w, err, "Could not create supplier.")
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]any{"id": id, "name": input.Name, "phone": input.Phone})
+}
+
 type settingsDTO struct {
 	PharmacyName              string `json:"pharmacyName"`
 	BranchName                string `json:"branchName"`
@@ -351,11 +384,21 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &input) {
 		return
 	}
-	if !validUserInput(input, true) {
+	if !validUserInput(input, false) || (input.Password != "" && len(input.Password) < 12) {
 		writeError(w, http.StatusBadRequest, "validation_error", "User details or password are invalid.", nil)
 		return
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	invitation := ""
+	password := input.Password
+	if password == "" {
+		invitation, err = newOpaqueToken()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user invitation.", nil)
+			return
+		}
+		password = invitation
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user.", nil)
 		return
@@ -365,14 +408,39 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user.", nil)
 		return
 	}
-	_, err = s.db.ExecContext(r.Context(), `INSERT INTO users (id, name, email, phone, role, password_hash)
+	tx, err := s.db.BeginTx(r.Context(), nil)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user.", nil)
+		return
+	}
+	defer tx.Rollback()
+	_, err = tx.ExecContext(r.Context(), `INSERT INTO users (id, name, email, phone, role, password_hash)
 		VALUES (?, ?, ?, ?, ?, ?)`, id, strings.TrimSpace(input.Name), strings.ToLower(strings.TrimSpace(input.Email)),
 		strings.TrimSpace(input.Phone), input.Role, string(hash))
 	if err != nil {
 		writeDatabaseError(w, err, "Could not create user.")
 		return
 	}
-	writeJSON(w, http.StatusCreated, userDTO{ID: id, Name: input.Name, Email: input.Email, Phone: input.Phone, Role: input.Role, IsActive: true})
+	expires := time.Now().UTC().Add(72 * time.Hour)
+	if invitation != "" {
+		if _, err := tx.ExecContext(r.Context(), `INSERT INTO user_invitations (token_hash, user_id, expires_at) VALUES (?, ?, ?)`,
+			hashToken(invitation), id, expires.Format(time.RFC3339Nano)); err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user invitation.", nil)
+			return
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "Could not create user.", nil)
+		return
+	}
+	response := map[string]any{
+		"id": id, "name": input.Name, "email": input.Email, "phone": input.Phone, "role": input.Role, "isActive": true,
+	}
+	if invitation != "" {
+		response["invitationToken"] = invitation
+		response["invitationExpiresAt"] = expires.Format(time.RFC3339Nano)
+	}
+	writeJSON(w, http.StatusCreated, response)
 }
 
 func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {

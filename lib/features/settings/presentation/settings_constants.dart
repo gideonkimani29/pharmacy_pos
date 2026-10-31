@@ -59,7 +59,8 @@ abstract final class SettingsStrings {
   static const String fieldPrintDetails = 'Print pharmacy details on receipts';
   static const String fieldFooter = 'Receipt footer message';
   static const String footerHint = 'For example: Thank you. Get well soon.';
-  static const String printerNote = 'Printing is not built yet. These choices are saved for when it is.';
+  static const String printerNote =
+      'Receipts open in the browser print dialog. Choose the printer there; USB and Bluetooth pairing is managed by your computer.';
 
   // Users
   static const String usersTitle = 'Users and roles';

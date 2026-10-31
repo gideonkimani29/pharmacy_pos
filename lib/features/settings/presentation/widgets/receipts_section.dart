@@ -28,19 +28,7 @@ class ReceiptsSection extends StatelessWidget {
             children: [
               SettingsFieldGrid(
                 children: [
-                  DropdownButtonFormField<PrinterConnection>(
-                    value: draft.printerConnection,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: SettingsStrings.fieldPrinter),
-                    items: [
-                      for (final connection in PrinterConnection.values)
-                        DropdownMenuItem(value: connection, child: Text(SettingsStrings.printerLabel(connection))),
-                    ],
-                    onChanged: (v) {
-                      if (v != null) cubit.edit((s) => s.copyWith(printerConnection: v));
-                    },
-                  ),
-                  DropdownButtonFormField<PaperWidth>(
+                    DropdownButtonFormField<PaperWidth>(
                     value: draft.paperWidth,
                     isExpanded: true,
                     decoration: const InputDecoration(labelText: SettingsStrings.fieldPaper),

@@ -28,8 +28,18 @@ MedicineDraft draft({
   );
 }
 
+final _testMedicines = [
+  const Medicine(id: 'm1', name: 'Panadol 500mg x24', genericName: 'Paracetamol', dosageForm: DosageForm.tablet, sku: 'PAR-500', barcode: '6161100010011', sellingPriceMinor: 18000, reorderLevel: 20, requiresPrescription: false, isActive: true, stockOnHand: 140),
+  const Medicine(id: 'm2', name: 'Brufen 400mg x30', genericName: 'Ibuprofen', dosageForm: DosageForm.tablet, sku: 'IBU-400', barcode: '', sellingPriceMinor: 32000, reorderLevel: 15, requiresPrescription: false, isActive: true, stockOnHand: 55),
+  const Medicine(id: 'm3', name: 'Ventolin inhaler 100mcg', genericName: 'Salbutamol', dosageForm: DosageForm.inhaler, sku: 'SAL-100', barcode: '6161100010103', sellingPriceMinor: 78000, reorderLevel: 6, requiresPrescription: true, isActive: true, stockOnHand: 12),
+  const Medicine(id: 'm4', name: 'Losec 20mg x14', genericName: 'Omeprazole', dosageForm: DosageForm.capsule, sku: 'OME-20', barcode: '', sellingPriceMinor: 54000, reorderLevel: 10, requiresPrescription: false, isActive: true, stockOnHand: 0),
+  const Medicine(id: 'm5', name: 'ORS sachet', genericName: 'Oral rehydration salts', dosageForm: DosageForm.sachet, sku: 'ORS-SAC', barcode: '', sellingPriceMinor: 3500, reorderLevel: 25, requiresPrescription: false, isActive: true, stockOnHand: 8),
+  const Medicine(id: 'm6', name: 'Coartem 80/480mg x6', genericName: 'Artemether/Lumefantrine', dosageForm: DosageForm.tablet, sku: 'ALU-80', barcode: '', sellingPriceMinor: 55000, reorderLevel: 12, requiresPrescription: true, isActive: true, stockOnHand: 4),
+  const Medicine(id: 'm7', name: 'Inactive syrup', genericName: 'Example ingredient', dosageForm: DosageForm.syrup, sku: 'INACTIVE', barcode: '', sellingPriceMinor: 1000, reorderLevel: 10, requiresPrescription: false, isActive: false, stockOnHand: 0),
+];
+
 MedicinesCubit buildCubit() {
-  final repository = DemoMedicineRepository();
+  final repository = DemoMedicineRepository(medicines: _testMedicines);
   return MedicinesCubit(
     getMedicines: GetMedicines(repository),
     saveMedicine: SaveMedicine(repository),
@@ -41,7 +51,7 @@ void main() {
   group('SaveMedicine', () {
     late SaveMedicine useCase;
 
-    setUp(() => useCase = SaveMedicine(DemoMedicineRepository()));
+    setUp(() => useCase = SaveMedicine(DemoMedicineRepository(medicines: _testMedicines)));
 
     Future<String?> failureOf(MedicineDraft d, {String? id}) async {
       final result = await useCase(d, id: id);

@@ -36,6 +36,17 @@ void main() {
     );
   }
 
+  List<StockBatch> testBatches() => [
+        batch(id: 'b1', medicineId: 'm1', expiresInDays: 420, onHand: 60),
+        batch(id: 'b2', medicineId: 'm1', expiresInDays: 600, onHand: 80),
+        batch(id: 'b5', medicineId: 'm3', expiresInDays: 210, onHand: 8, reorder: 25),
+        batch(id: 'b6', medicineId: 'm4', expiresInDays: 48, onHand: 25),
+        batch(id: 'b9', medicineId: 'm6', expiresInDays: 18, onHand: 71),
+        batch(id: 'b10', medicineId: 'm7', expiresInDays: 160, onHand: 0),
+        batch(id: 'b18', medicineId: 'm16', expiresInDays: -6, onHand: 14),
+        batch(id: 'b19', medicineId: 'm6', expiresInDays: -40, onHand: 0),
+      ];
+
   group('StockBatch.expiryAt', () {
     test('uses the 30/60/90 day bands and treats the expiry date itself as sellable', () {
       expect(batch(expiresInDays: -1).expiryAt(today), BatchExpiry.expired);
@@ -53,7 +64,7 @@ void main() {
     late AdjustStock useCase;
 
     // A fresh repository per test: a successful adjustment changes the stored quantity.
-    setUp(() => useCase = AdjustStock(DemoStockRepository(clock: () => today)));
+    setUp(() => useCase = AdjustStock(DemoStockRepository(batches: testBatches())));
 
     StockAdjustmentDraft draft({
       int previous = 25,
@@ -98,7 +109,7 @@ void main() {
 
   group('StockCubit', () {
     StockCubit build() {
-      final repository = DemoStockRepository(clock: () => today);
+      final repository = DemoStockRepository(batches: testBatches());
       return StockCubit(
         getStockBatches: GetStockBatches(repository),
         adjustStock: AdjustStock(repository),

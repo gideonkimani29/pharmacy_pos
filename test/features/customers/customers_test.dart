@@ -20,7 +20,7 @@ CustomerDraft draft({
 }
 
 CustomerAccountsCubit buildCubit() {
-  final repository = DemoCustomerAccountRepository(clock: () => DateTime(2026, 10, 6));
+  final repository = DemoCustomerAccountRepository(customers: _testCustomers);
   return CustomerAccountsCubit(
     getCustomerAccounts: GetCustomerAccounts(repository),
     saveCustomerAccount: SaveCustomerAccount(repository),
@@ -28,6 +28,19 @@ CustomerAccountsCubit buildCubit() {
     receiveAccountPayment: ReceiveAccountPayment(repository),
   );
 }
+
+final DateTime _testToday = DateTime(2026, 10, 6);
+
+final List<CustomerAccount> _testCustomers = [
+  CustomerAccount(id: 'c1', name: 'Mary Chebet', phone: '+254700000001', email: 'mary.chebet@example.com', creditLimitMinor: 500000, balanceMinor: 120000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 2))),
+  CustomerAccount(id: 'c2', name: 'Uasin Gishu Community Clinic', phone: '+254700000002', email: 'pharmacy@ugclinic.example', creditLimitMinor: 5000000, balanceMinor: 3250000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 1))),
+  CustomerAccount(id: 'c3', name: 'Kapsabet SACCO Staff Account', phone: '+254700000003', email: '', creditLimitMinor: 2000000, balanceMinor: 2350000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 6))),
+  CustomerAccount(id: 'c4', name: 'John Kiprono', phone: '+254700000004', email: '', creditLimitMinor: 0, balanceMinor: 0, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 14))),
+  CustomerAccount(id: 'c5', name: 'Grace Wanjiku', phone: '+254712345678', email: 'grace.w@example.com', creditLimitMinor: 1000000, balanceMinor: 0, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 4))),
+  CustomerAccount(id: 'c6', name: 'Eldoret Day Care Centre', phone: '+254722334455', email: '', creditLimitMinor: 1500000, balanceMinor: 480000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 9))),
+  CustomerAccount(id: 'c7', name: 'Peter Otieno', phone: '+254733445566', email: '', creditLimitMinor: 300000, balanceMinor: 0, isActive: false, lastPurchaseOn: _testToday.subtract(const Duration(days: 210))),
+  CustomerAccount(id: 'c8', name: 'Faith Jepchirchir', phone: '+254744556677', email: 'faith.j@example.com', creditLimitMinor: 800000, balanceMinor: 800000, isActive: true, lastPurchaseOn: _testToday.subtract(const Duration(days: 11))),
+];
 
 void main() {
   group('CustomerAccount', () {
@@ -58,7 +71,7 @@ void main() {
     late SaveCustomerAccount useCase;
 
     setUp(() {
-      useCase = SaveCustomerAccount(DemoCustomerAccountRepository(clock: () => DateTime(2026, 10, 6)));
+      useCase = SaveCustomerAccount(DemoCustomerAccountRepository(customers: _testCustomers));
     });
 
     Future<String?> failureOf(CustomerDraft d, {String? id}) async {
@@ -100,7 +113,7 @@ void main() {
     late ReceiveAccountPayment useCase;
 
     setUp(() {
-      useCase = ReceiveAccountPayment(DemoCustomerAccountRepository(clock: () => DateTime(2026, 10, 6)));
+      useCase = ReceiveAccountPayment(DemoCustomerAccountRepository(customers: _testCustomers));
     });
 
     Future<String?> failureOf(AccountPaymentDraft d) async {

@@ -91,7 +91,7 @@ The client should map connection/time-out failures to `NetworkFailure`, HTTP 401
 - Make customer payment receipt and balance reduction atomic. Purchases and stock adjustments must also update stock consistently.
 - Return stable IDs and ISO-8601 timestamps. Do not rely on display names as identifiers.
 
-Example sale request shape (field names must be agreed with the Go API):
+Example sale request shape:
 
 ```json
 {

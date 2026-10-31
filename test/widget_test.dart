@@ -8,14 +8,19 @@ import 'package:pharmacy_pos/app.dart';
 import 'package:pharmacy_pos/core/network/api_session.dart';
 
 class _EmptyTokenStorage implements TokenStorage {
+  _EmptyTokenStorage({this.accessToken, this.refreshToken});
+
+  final String? accessToken;
+  final String? refreshToken;
+
   @override
   Future<void> clear() async {}
 
   @override
-  Future<String?> readAccessToken() async => null;
+  Future<String?> readAccessToken() async => accessToken;
 
   @override
-  Future<String?> readRefreshToken() async => null;
+  Future<String?> readRefreshToken() async => refreshToken;
 
   @override
   Future<void> writeTokens(
@@ -79,5 +84,57 @@ void main() {
       {'token': 'invite-token', 'password': 'a-very-long-password'},
     );
     expect(find.text('Sign in to Pharmacy POS'), findsOneWidget);
+  });
+
+  testWidgets('authenticated app provides the listenable API session safely',
+      (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final session = ApiSession(
+      baseUrl: 'http://localhost:8080/api/v1',
+      tokenStorage:
+          _EmptyTokenStorage(accessToken: 'expired', refreshToken: 'refresh'),
+      client: MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/refresh') {
+          return http.Response(
+            jsonEncode({
+              'accessToken': 'access',
+              'refreshToken': 'rotated',
+              'tokenType': 'Bearer',
+              'expiresIn': 900,
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        if (request.url.path == '/api/v1/settings') {
+          return http.Response(
+            jsonEncode({'taxRateBasisPoints': 0}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response(
+          jsonEncode({
+            'error': {
+              'code': 'not_found',
+              'message': 'Not configured.',
+              'details': null
+            }
+          }),
+          404,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    addTearDown(session.dispose);
+
+    await tester.pumpWidget(PharmacyPosApp(session: session));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign in to Pharmacy POS'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }

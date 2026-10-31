@@ -104,6 +104,21 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal_error", "Could not process sale.", nil)
 		return
 	}
+	if input.CustomerID != nil {
+		var active int
+		if err := tx.QueryRowContext(r.Context(), `SELECT active FROM customers WHERE id = ?`, *input.CustomerID).Scan(&active); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				writeError(w, http.StatusBadRequest, "invalid_customer", "Customer was not found.", nil)
+			} else {
+				writeError(w, http.StatusInternalServerError, "internal_error", "Could not validate customer.", nil)
+			}
+			return
+		}
+		if active != 1 {
+			writeError(w, http.StatusConflict, "customer_inactive", "Customer account is inactive.", nil)
+			return
+		}
+	}
 
 	type checkedLine struct {
 		id         string
@@ -209,6 +224,13 @@ func (s *Server) submitSale(w http.ResponseWriter, r *http.Request) {
 			var allowCredit bool
 			if err := tx.QueryRowContext(r.Context(), `SELECT json_extract(value_json, '$.allowCreditSales') FROM settings WHERE id = 1`).Scan(&allowCredit); err == nil && !allowCredit {
 				writeError(w, http.StatusForbidden, "credit_disabled", "Credit sales are disabled.", nil)
+				return
+			}
+		}
+		if input.CustomerID != nil {
+			if _, err := tx.ExecContext(r.Context(), `UPDATE customers SET last_purchase_on = ? WHERE id = ?`,
+				now.Format("2006-01-02"), *input.CustomerID); err != nil {
+				writeError(w, http.StatusInternalServerError, "internal_error", "Could not update customer purchase date.", nil)
 				return
 			}
 		}

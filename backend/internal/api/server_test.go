@@ -132,6 +132,47 @@ func TestBootstrapLoginAndRefreshRotation(t *testing.T) {
 	}
 }
 
+func TestUserInvitationCanBeAcceptedOnlyOnce(t *testing.T) {
+	_, server := testServer(t)
+	client := server.Client()
+	bootstrap := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/bootstrap", "", map[string]any{
+		"name": "Admin", "email": "admin@example.test", "password": "a-very-secure-password",
+	})
+	tokens := decodeResponse[tokenResponse](t, bootstrap)
+	create := request(t, client, http.MethodPost, server.URL+"/api/v1/users", tokens.AccessToken, map[string]any{
+		"name": "Cashier", "email": "cashier@example.test", "phone": "", "role": "cashier",
+	})
+	if create.StatusCode != http.StatusCreated {
+		t.Fatalf("create user status = %d, want 201", create.StatusCode)
+	}
+	var response map[string]any
+	if err := json.NewDecoder(create.Body).Decode(&response); err != nil {
+		t.Fatal(err)
+	}
+	invitation, ok := response["invitationToken"].(string)
+	if !ok || invitation == "" {
+		t.Fatal("create user did not return an invitation token")
+	}
+	accept := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/accept-invitation", "", map[string]string{
+		"token": invitation, "password": "another-secure-password",
+	})
+	if accept.StatusCode != http.StatusNoContent {
+		t.Fatalf("accept invitation status = %d, want 204", accept.StatusCode)
+	}
+	replay := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/accept-invitation", "", map[string]string{
+		"token": invitation, "password": "yet-another-secure-password",
+	})
+	if replay.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("replayed invitation status = %d, want 401", replay.StatusCode)
+	}
+	login := request(t, client, http.MethodPost, server.URL+"/api/v1/auth/login", "", map[string]string{
+		"email": "cashier@example.test", "password": "another-secure-password",
+	})
+	if login.StatusCode != http.StatusOK {
+		t.Fatalf("invited user login status = %d, want 200", login.StatusCode)
+	}
+}
+
 func TestSaleIdempotencyAndAtomicStock(t *testing.T) {
 	db, server := testServer(t)
 	client := server.Client()

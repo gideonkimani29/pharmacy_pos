@@ -389,6 +389,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	invitation := ""
+	var err error
 	password := input.Password
 	if password == "" {
 		invitation, err = newOpaqueToken()

@@ -121,6 +121,12 @@ class ApiSession extends ChangeNotifier {
         code: 'network_timeout',
         message: 'The Go API did not respond in time. Try again.',
       );
+    } on FormatException catch (error) {
+      _restoreError = ApiException(
+        statusCode: 0,
+        code: 'invalid_response',
+        message: error.message,
+      );
     }
     _initialized = true;
     _notify();
